@@ -1,0 +1,17 @@
+id	name	species
+bt.lag.ft1	bt glucose	bt
+bt.lag.ft2	bt pyruvate	bt
+bt.expA.ft1	bt glucose	bt
+bt.expA.ft2	bt pyruvate	bt
+bt.expB.ft3	bt mannose	bt
+bh.expA.ft1	bh trehalose	bh
+bh.expA.ft2	bh pyruvate	bh
+bh.expB.ft3	bh glucose glutamte	bh
+ri.lag.ft1	ri glucose	ri
+ri.lag.ft2	ri pyruvate	ri
+ri.expA.ft1	ri glucose	ri
+ri.expA.ft2	ri pyruvate	ri
+ri.expB.ft3	ri lactate	ri
+ri.expB.ft4	ri lactate and acetate	ri
+ri.maint.ft3	ri lactate	ri
+ri.maint.ft4	ri lactate and acetate	ri

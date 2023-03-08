@@ -1,0 +1,7 @@
+sample	condition
+bh_t14_A	t14
+bh_t14_B	t14
+bh_t14_C	t14
+bh_t32_A	t32
+bh_t32_B	t32
+bh_t32_C	t32

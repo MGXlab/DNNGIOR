@@ -1,0 +1,17 @@
+id	subpopulation	feedingTerm
+1	bt.lag	bt.lag.ft1
+2	bt.lag	bt.lag.ft2
+3	bt.expA	bt.expA.ft1
+4	bt.expA	bt.expA.ft2
+5	bt.expB	bt.expB.ft3
+6	bh.expA	bh.expA.ft1
+7	bh.expA	bh.expA.ft2
+8	bh.expB	bh.expB.ft3
+9	ri.lag	ri.lag.ft1
+10	ri.lag	ri.lag.ft2
+11	ri.expA	ri.expA.ft1
+12	ri.expA	ri.expA.ft2
+13	ri.expB	ri.expB.ft3
+14	ri.expB	ri.expB.ft4
+15	ri.maint	ri.maint.ft3
+16	ri.maint	ri.maint.ft4

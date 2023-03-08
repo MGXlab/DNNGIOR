@@ -1,0 +1,16 @@
+id	species	mumax	pHoptimal	pHalpha	count	color	state
+bt.lag	bt	0.1	7	5	0.0212	#ff8300	active
+bt.expA	bt	1.520962409	6.97877604	35.845095	0	#ff8300	active
+bt.expB	bt	1.520962409	6.97877604	35.845095	0	#ff8300	active
+bt.inac	bt	0	6.5	250	0	#ff8300	inactive
+bt.void	bt	0	6.5	250	0	#ff8300	dead
+bh.expA	bh	0.462822526	6.999533399	100.7960795	0.01105	#FF10F0	active
+bh.expB	bh	1.978555611	6.399652451	66.93935886	0	#FF10F0	active
+bh.inac	bh	0	6.5	5	0	#FF10F0	inactive
+bh.void	bh	0	6.5	5	0	#FF10F0	dead
+ri.lag	ri	0.1	6.5	100	0.01	#00B8FF	active
+ri.expA	ri	1	6.5	100	0	#00B8FF	active
+ri.expB	ri	1	6.5	100	0	#00B8FF	active
+ri.maint	ri	0.1	6.5	100	0	#00B8FF	active
+ri.inac	ri	0	6.5	100	0	#00B8FF	inactive
+ri.void	ri	0	6.5	100	0	#00B8FF	dead
