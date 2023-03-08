@@ -9,6 +9,6 @@
 
 [how to use NN-weights to gapfill models](https://colab.research.google.com/drive/1rNbFEUFEy_LoUhcp0R2aq3wrvqlcQAm4?usp=sharing#scrollTo=b66b7275)
 
-
+[Going from a fasta file to a curated model](https://colab.research.google.com/drive/1gAnX3eGtyiGjVvt5rLiX7U2wnkM8JOF2#scrollTo=UfdQpuCAD-eR)
 
 
