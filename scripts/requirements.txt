@@ -1,8 +1,0 @@
-numpy
-sklearn
-seaborn
-scipy
-sqlite3
-plotly
-pony
-lmfit
