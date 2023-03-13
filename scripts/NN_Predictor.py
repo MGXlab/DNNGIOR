@@ -26,6 +26,9 @@ class NN:
         rxn_keys_path =  path to the keys (optional based on modeltype)
 
         '''
+        
+        self.modeltype = modeltype
+        
         #If you dont give a path to your own keys or NN I define a default path
         if path is None or rxn_keys_path is None:
             cwd = Path.cwd()
@@ -52,7 +55,6 @@ class NN:
         else:
             print('Using ids at provided path')
 
-        self.modeltype = modeltype
         self.network = self.__get_network(path)
         self.rxn_keys = self.__get_ids(rxn_keys_path)
 
