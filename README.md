@@ -9,6 +9,8 @@ Dependencies
 
 2. Cobra (https://opencobra.github.io/cobrapy/)
 
+(3. ModelSEEDpy https://github.com/ModelSEED/ModelSEEDpy)
+
 
 # Examples of usage 
 
