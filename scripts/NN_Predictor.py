@@ -13,172 +13,119 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from pathlib import Path
 import cobra
-path = Path.cwd()
-sys.path.append(path)
-trainedNN = os.path.join(path.parent, 'files', 'NN')
 
 
-#Function that loads the Neural network, maybe unneccesary; path is path to .h5 file
-def load_NN(path=None):
-    '''
-    
+class NN:
+    def __init__(self,modeltype='ModelSEED', path=None, rxn_keys_path=None):
+        '''
+        Kind of a wrapper for the Sequential keras model
+        used to make predictions for models
 
-    Parameters
-    ----------
-    path : TYPE, optional
-        DESCRIPTION. The default is None.
+        modeltype = kind of model, options are currently (ModelSEED or CarveMe)
+        path  = path to NN (optional will default based on modeltype)
+        rxn_keys_path =  path to the keys (optional based on modeltype)
 
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
+        '''
+        #If you dont give a path to your own keys or NN I define a default path
+        if path is None or rxn_keys_path is None:
+            cwd = Path.cwd()
+            sys.path.append(cwd)
+            self.def_path = os.path.join(cwd.parent, 'files', 'NN')
 
-    '''
-    if path is None:
-        print('Loading Default NN (ModelSEED)')
-        path = os.path.join(trainedNN, 'NN_MS.h5')
-    else:
-        print('Loading network at user provided path')
-    return tf.keras.models.load_model(path, custom_objects={"custom_loss": 'binary_crossentropy'})
-
-def load_ids(nnpath=trainedNN):
-    '''
-    
-
-    Parameters
-    ----------
-    path : TYPE, optional
-        DESCRIPTION. The default is trainedNN + '/rxn_ids_ModelSEED.npy'.
-
-    Returns
-    -------
-    ids : TYPE
-        DESCRIPTION.
-
-    '''
-    nfile = os.path.join(nnpath, 'rxn_ids_ModelSEED.npy') 
-    ids = np.load(nfile, allow_pickle=True).astype('str')
-    return ids
-#Function that makes a prediction based on input_data using Neural Network (NN)
-def predict(input, trainedNN=None, rxn_ids=None):
-    '''
-    
-
-    Parameters
-    ----------
-    input : TYPE
-        DESCRIPTION.
-    NN : TYPE, optional
-        DESCRIPTION. The default is None.
-    rxn_ids : TYPE, optional
-        DESCRIPTION. The default is None.
-
-    Raises
-    ------
-    Exception
-        DESCRIPTION.
-
-    Returns
-    -------
-    prediction : TYPE
-        DESCRIPTION.
-
-    '''
-    if rxn_ids is None:
-        rxn_ids = load_ids(trainedNN)
-    if isinstance(input, cobra.core.model.Model):
-        input = convert_reaction_list(input.reactions.list_attr('id'), rxn_ids, trainedNN)
-    else:
-        if (isinstance(input, pd.DataFrame)):
-            input.reindex(rxn_ids)
-            df_columns = input.columns
-            input = input.T
-        else:
-            if isinstance(input, dict):
-                input = convert_reaction_list([i for i in input if input[i]==1], rxn_ids, trainedNN)
+        if path is None:
+            if self.modeltype == 'ModelSEED':
+                path = os.path.join(self.def_path, 'NN_MS.h5')
+            elif self.modeltype == 'CarveMe':
+                path = os.path.join(self.def_path, 'NN_CM.h5')
             else:
-                if not np.isin(input, [0,1]).all():
-                    print('Converting to binary array:')
-                    try:
-                        input = convert_reaction_list(input, trainedNN = trainedNN)
-                    except:
-                        raise Exception("Conversion failed")
+                raise Exception('No path or recognised modeltype provided')
+            print('Loading default {} NN'.format(self.modeltype))
+        else:
+            print('Loading network at user provided path')
+
+        if rxn_keys_path is None:
+            if(self.modeltype == 'ModelSEED'):
+                rxn_keys_path = os.path.join(self.def_path,'rxn_ids_ModelSEED.npy')
+            elif(self.modeltype == 'CarveMe'):
+                rxn_keys_path = os.path.join(self.def_path,'/rxn_ids_bigg.npy')
+            print('Using {} ids at {}'.format(self.modeltype, rxn_keys_path))
+        else:
+            print('Using ids at provided path')
+
+        self.modeltype = modeltype
+        self.network = self.__get_network(path)
+        self.rxn_keys = self.__get_ids(rxn_keys_path)
+
+
+    #Function that loads the Neural network; path is path to .h5 file
+    def __get_network(self, path):
+        network = tf.keras.models.load_model(path, custom_objects={"custom_loss": 'binary_crossentropy'})
+        if not isinstance(network, Sequential):
+            raise Exception('Type: {} not supported'.format(type(network)))
+        return network
+
+
+    def __get_ids(self, rxn_keys_path):
+        ids = np.load(rxn_keys_path, allow_pickle=True).astype('str')
+        return ids
+
+#Function that makes a prediction based on input_data using Neural Network (NN)
+    def predict(self, input):
+        if isinstance(input, cobra.core.model.Model):
+            input = self.__convert_reaction_list(input.reactions.list_attr('id'))
+        else:
+            if (isinstance(input, pd.DataFrame)):
+                input.reindex(self.rxn_keys)
+                df_columns = input.columns
+                input = input.T
+            else:
+                if isinstance(input, dict):
+                    input = self.__convert_reaction_list([i for i in input if input[i]==1])
                 else:
-                    input = np.asarray(input.T)
+                    if isinstance(input, (list, set)):
+                        print('Converting to binary array:')
+                        try:
+                            input = self.__convert_reaction_list(input)
+                        except:
+                            raise Exception("Conversion failed")
+                    elif np.isin(input, [0,1]).all():
+                        input = np.asarray(input.T)
+                    else:
+                        raise Exception("input type")
 
-    if trainedNN is None:
-        trainedNN = load_NN()
-    if isinstance(trainedNN, str):
-            print('Loading network')
-            trainedNN = load_NN(os.path.join(trainedNN, 'NN_MS.h5'))
-    if not isinstance(trainedNN, Sequential):
-        raise Exception('Type: {} not supported'.format(type(trainedNN)))
+        single_input=False
+        #test for single input (trips up NN)
+        if np.ndim(input) == 1:
+            single_input=True
+            input = np.expand_dims(input,axis=0)
+        if input.shape[-1] == self.network.input_shape[-1]:
+            prediction = np.zeros(input.shape)
+            #   load network and make prediction
+            t_result = self.network.predict(input)
+            prediction = np.asarray(t_result)
 
-
-    single_input=False
-    #test for single input (trips up trainedNN)
-    if np.ndim(input) == 1:
-        single_input=True
-        input = np.expand_dims(input,axis=0)
-    if input.shape[-1] == trainedNN.input_shape[-1]:
-        prediction = np.zeros(input.shape)
-        #   load network and make prediction
-        t_result = trainedNN.predict(input)
-        prediction = np.asarray(t_result)
-
-        if single_input:
-            prediction = dict(zip(rxn_ids, np.squeeze(prediction)))
-    else:
-        raise Exception("data has wrong shape: ", input.shape, 'instead of ', trainedNN.input_shape)
-    if isinstance(input, pd.DataFrame):
-        prediction = pd.DataFrame(index=rxn_ids, columns=df_columns, data=prediction.T)
-    return prediction
-
-#function that generates a binary input based on a list of reaction ids
-def convert_reaction_list(reaction_set, NN_reaction_ids = None, trainedNN = None):
-    '''
-    
-
-    Parameters
-    ----------
-    reaction_set : TYPE
-        DESCRIPTION.
-    NN_reaction_ids : TYPE, optional
-        DESCRIPTION. The default is None.
-
-    Raises
-    ------
-    Exception
-        DESCRIPTION.
-
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-
-    '''
-    if NN_reaction_ids is None:
-        if(list(reaction_set)[0][:3] == 'rxn'):
-            model_type = 'ModelSEED'
-            NN_reaction_ids = np.load(trainedNN + '/rxn_ids_ModelSEED.npy', allow_pickle=True).astype('str')
+            if single_input:
+                prediction = dict(zip(self.rxn_keys, np.squeeze(prediction)))
         else:
-            model_type = 'BiGG'
-            NN_reaction_ids = np.load(trainedNN + '/rxn_ids_bigg.npy', allow_pickle=True).astype('str')
-        print('Using {} ids'.format(model_type))
-    else:
-        print('Using user-provided ids')
-    b_input = []
-    if(list(reaction_set)[0][:3] == 'rxn'):
-        reaction_list = [reaction[0:8] + "_c0" for reaction in reaction_set]
-    else:
-        reaction_list = list(reaction_set)
-    for i in NN_reaction_ids:
-        if i in reaction_list:
-            b_input.append(1)
+            raise Exception("data has wrong shape: ", input.shape, 'instead of ', NN.input_shape)
+        if isinstance(input, pd.DataFrame):
+            prediction = pd.DataFrame(index=self.rxn_keys, columns=df_columns, data=prediction.T)
+        return prediction
+
+    #function that generates a binary input based on a list of reaction ids
+    def __convert_reaction_list(self, reaction_set):
+        b_input = []
+        if(self.modeltype=='ModelSEED'):
+            reaction_list = [reaction[:8] for reaction in reaction_set]
+            self.rxn_keys  = [key[:8] for key in self.rxn_keys]
         else:
-            b_input.append(0)
-    cheat = set([i for i in set(reaction_set) if not 'EX' in i])
-    print("#reactions not in NN_rxn: ", len(cheat.difference(NN_reaction_ids)))
-    if(sum(b_input)==0):
-        raise Exception("No reactions found")
-    return np.array(b_input)
+            reaction_list = list(reaction_set)
+        for i in self.rxn_keys:
+            if i in reaction_list:
+                b_input.append(1)
+            else:
+                b_input.append(0)
+        print("#reactions not found in keys: ", len(set(reaction_set)) - sum(b_input), '/', len(reaction_set))
+        if(sum(b_input)==0):
+            raise Exception("No reactions found")
+        return np.array(b_input)
