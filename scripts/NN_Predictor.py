@@ -50,7 +50,7 @@ class NN:
             if(self.modeltype == 'ModelSEED'):
                 rxn_keys_path = os.path.join(self.def_path,'rxn_ids_ModelSEED.npy')
             elif(self.modeltype == 'CarveMe'):
-                rxn_keys_path = os.path.join(self.def_path,'/rxn_ids_bigg.npy')
+                rxn_keys_path = os.path.join(self.def_path,'/rxn_ids_BiGG.npy')
             print('Using {} ids at {}'.format(self.modeltype, rxn_keys_path))
         else:
             print('Using ids at provided path')
