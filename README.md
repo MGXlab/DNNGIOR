@@ -7,7 +7,7 @@ Dependencies
 
 1. Tensorflow (https://www.tensorflow.org/install or https://anaconda.org/conda-forge/tensorflow)
 
-2. Installing Cobra (https://opencobra.github.io/cobrapy/)
+2. Cobra (https://opencobra.github.io/cobrapy/)
 
 
 # Examples of usage 
