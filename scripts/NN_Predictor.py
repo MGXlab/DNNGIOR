@@ -73,27 +73,32 @@ class NN:
 
 #Function that makes a prediction based on input_data using Neural Network (NN)
     def predict(self, input):
+        #check if input = model
         if isinstance(input, cobra.core.model.Model):
             input = self.__convert_reaction_list(input.reactions.list_attr('id'))
         else:
+            #if input is a pandas dataframe, reindex based on keys
             if (isinstance(input, pd.DataFrame)):
                 input.reindex(self.rxn_keys)
                 df_columns = input.columns
                 input = input.T
             else:
+                #if input is a dictionary, take keys and convert that reaction list
                 if isinstance(input, dict):
                     input = self.__convert_reaction_list([i for i in input if input[i]==1])
                 else:
+                    #if set or list create convert to binary
                     if isinstance(input, (list, set)):
                         print('Converting to binary array:')
                         try:
                             input = self.__convert_reaction_list(input)
                         except:
                             raise Exception("Conversion failed")
+                    #finally if it is already a binary array, nothing needs to be done
                     elif np.isin(input, [0,1]).all():
                         input = np.asarray(input.T)
                     else:
-                        raise Exception("input type")
+                        raise Exception("input type: {}".format(type(input))
 
         single_input=False
         #test for single input (trips up NN)
@@ -117,6 +122,7 @@ class NN:
     #function that generates a binary input based on a list of reaction ids
     def __convert_reaction_list(self, reaction_set):
         b_input = []
+        #need to take into account the annoying _c0 stuff
         if(self.modeltype=='ModelSEED'):
             reaction_list = [reaction[:8] for reaction in reaction_set]
             self.rxn_keys  = [key[:8] for key in self.rxn_keys]
