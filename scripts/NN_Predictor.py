@@ -114,7 +114,7 @@ class NN:
             if single_input:
                 prediction = dict(zip(self.rxn_keys, np.squeeze(prediction)))
         else:
-            raise Exception("data has wrong shape: ", input.shape, 'instead of ', NN.input_shape)
+            raise Exception("data has wrong shape: ", input.shape, 'instead of ', self.network.input_shape)
         if isinstance(input, pd.DataFrame):
             prediction = pd.DataFrame(index=self.rxn_keys, columns=df_columns, data=prediction.T)
         return prediction
