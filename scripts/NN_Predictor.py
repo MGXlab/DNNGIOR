@@ -16,7 +16,7 @@ import cobra
 
 
 class NN:
-    def __init__(self,modeltype='ModelSEED', path=None, rxn_keys_path=None):
+    def __init__(self,modeltype=None, path=None):
         '''
         Kind of a wrapper for the Sequential keras model
         used to make predictions for models
@@ -26,13 +26,13 @@ class NN:
         rxn_keys_path =  path to the keys (optional based on modeltype)
 
         '''
-        #If you dont give a path to your own keys or NN I define a default path
-        if path is None or rxn_keys_path is None:
+
+        if path is None:
+            #this will only work if ran from scripts, should be a package way 
             cwd = Path.cwd()
             sys.path.append(cwd)
             self.def_path = os.path.join(cwd.parent, 'files', 'NN')
 
-        if path is None:
             if self.modeltype == 'ModelSEED':
                 path = os.path.join(self.def_path, 'NN_MS.h5')
             elif self.modeltype == 'CarveMe':
@@ -43,31 +43,16 @@ class NN:
         else:
             print('Loading network at user provided path')
 
-        if rxn_keys_path is None:
-            if(self.modeltype == 'ModelSEED'):
-                rxn_keys_path = os.path.join(self.def_path,'rxn_ids_ModelSEED.npy')
-            elif(self.modeltype == 'CarveMe'):
-                rxn_keys_path = os.path.join(self.def_path,'/rxn_ids_bigg.npy')
-            print('Using {} ids at {}'.format(self.modeltype, rxn_keys_path))
-        else:
-            print('Using ids at provided path')
+        self.__get_network(path)
 
-        self.modeltype = modeltype
-        self.network = self.__get_network(path)
-        self.rxn_keys = self.__get_ids(rxn_keys_path)
 
 
     #Function that loads the Neural network; path is path to .h5 file
     def __get_network(self, path):
-        network = tf.keras.models.load_model(path, custom_objects={"custom_loss": 'binary_crossentropy'})
-        if not isinstance(network, Sequential):
-            raise Exception('Type: {} not supported'.format(type(network)))
-        return network
-
-
-    def __get_ids(self, rxn_keys_path):
-        ids = np.load(rxn_keys_path, allow_pickle=True).astype('str')
-        return ids
+        with h5py.File(model_path, mode='r') as f:
+            self.modeltype = f.attrs['modeltype']
+            self.keys = f['rxn_keys'].asstr()[:]
+            self.network = hdf5_format.load_model_from_hdf5(f)
 
 #Function that makes a prediction based on input_data using Neural Network (NN)
     def predict(self, input):
