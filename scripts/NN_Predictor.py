@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct 21 13:19:13 2019
+
 @author: meine
 """
 import numpy as np
@@ -12,90 +13,104 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from pathlib import Path
 import cobra
-
+from tensorflow.python.keras.saving import hdf5_format
+import h5py
 
 class NN:
-    def __init__(self,modeltype='ModelSEED', path=None, rxn_keys_path=None):
+    def __init__(self,modeltype=None, path=None, custom=None):
         '''
-        Kind of a wrapper for the Sequential keras model
+        Wrapper for the Sequential keras model
         used to make predictions for models
-        modeltype = kind of model, options are currently (ModelSEED or CarveMe)
-        path  = path to NN (optional will default based on modeltype)
-        rxn_keys_path =  path to the keys (optional based on modeltype)
+
+        PARAMETERS
+        -------
+        modeltype: string, optional
+            options are currently (ModelSEED or CarveMe)
+        path: TYPE, optional
+            path to NN (optional will default based on modeltype)
+        custom: tuple, list, optional
+            temporary, I use this so NN_trainer can give a NN class as output
+            might not be neccesary
+
         '''
-
-        self.modeltype = modeltype
-
-        #If you dont give a path to your own keys or NN I define a default path
-        if path is None or rxn_keys_path is None:
-            cwd = Path.cwd()
-            sys.path.append(cwd)
-            self.def_path = os.path.join(cwd.parent, 'files', 'NN')
-
-        if path is None:
-            if self.modeltype == 'ModelSEED':
-                path = os.path.join(self.def_path, 'NN_MS.h5')
-            elif self.modeltype == 'CarveMe':
-                path = os.path.join(self.def_path, 'NN_CM.h5')
+        if custom:
+            self.network = custom[0]
+            self.rxn_keys = custom[1]
+            self.modeltype = custom[2]
+        else:
+            if path is None:
+                #this will only work if ran from scripts, should be a package way right?
+                cwd = Path.cwd()
+                sys.path.append(cwd)
+                self.def_path = os.path.join(cwd.parent, 'files', 'NN')
+                if modeltype:
+                    self.modeltype = modeltype
+                    if self.modeltype == 'ModelSEED':
+                        path = os.path.join(self.def_path, 'NN_MS.h5')
+                    elif self.modeltype == 'CarveMe':
+                        path = os.path.join(self.def_path, 'NN_CM.h5')
+                else:
+                    raise Exception('No path or recognised modeltype provided')
+                print('Loading default {} NN'.format(self.modeltype))
             else:
-                raise Exception('No path or recognised modeltype provided')
-            print('Loading default {} NN'.format(self.modeltype))
-        else:
-            print('Loading network at user provided path')
+                print('Loading network at user provided path')
+            self.__get_network(path)
 
-        if rxn_keys_path is None:
-            if(self.modeltype == 'ModelSEED'):
-                rxn_keys_path = os.path.join(self.def_path,'rxn_ids_ModelSEED.npy')
-            elif(self.modeltype == 'CarveMe'):
-                rxn_keys_path = os.path.join(self.def_path,'/rxn_ids_BiGG.npy')
-            print('Using {} ids at {}'.format(self.modeltype, rxn_keys_path))
-        else:
-            print('Using ids at provided path')
-
-        self.network = self.__get_network(path)
-        self.rxn_keys = self.__get_ids(rxn_keys_path)
 
 
     #Function that loads the Neural network; path is path to .h5 file
     def __get_network(self, path):
-        network = tf.keras.models.load_model(path, custom_objects={"custom_loss": 'binary_crossentropy'})
-        if not isinstance(network, Sequential):
-            raise Exception('Type: {} not supported'.format(type(network)))
-        return network
+        """
+        Get network, modeltype and rxn_keys at path
+        """
+        with h5py.File(path, mode='r') as f:
+            self.modeltype = f.attrs['modeltype']
+            self.rxn_keys = f['rxn_keys'].asstr()[:]
+        self.network = tf.keras.models.load_model(path, custom_objects={"custom_loss": 'binary_crossentropy'})
 
-
-    def __get_ids(self, rxn_keys_path):
-        ids = np.load(rxn_keys_path, allow_pickle=True).astype('str')
-        return ids
-
-#Function that makes a prediction based on input_data using Neural Network (NN)
+#
     def predict(self, input):
-        #check if input = model
+        """
+        Function that makes a prediction based on input_data
+        Input can be several things:
+            multiple reaction sets:
+                DataFrame -> DataFrame with predictions with index = self.rxn_keys
+                array -> array with same positions
+            single reaction set:
+                Cobra model
+                Dictionary of reactions mapping to 0 or 1
+                List or set of reactions
+                all -> dictionary {reaction: prediction}
+        Exception:
+            if input shape does not match with the input of the network
+        """
+        #Check if model -> get list of ids and convert
         if isinstance(input, cobra.core.model.Model):
             input = self.__convert_reaction_list(input.reactions.list_attr('id'))
         else:
-            #if input is a pandas dataframe, reindex based on keys
+            # check if DataFrame, reindex based on self.rxn_keys
             if (isinstance(input, pd.DataFrame)):
                 input.reindex(self.rxn_keys)
                 df_columns = input.columns
+                #Transpose because rows need to be different models for the network
                 input = input.T
             else:
-                #if input is a dictionary, take keys and convert that reaction list
+                #check if dictionary, get list of reactions and convert
                 if isinstance(input, dict):
                     input = self.__convert_reaction_list([i for i in input if input[i]==1])
                 else:
-                    #if set or list create convert to binary
+                    #check if list or set, convert
                     if isinstance(input, (list, set)):
                         print('Converting to binary array:')
                         try:
                             input = self.__convert_reaction_list(input)
                         except:
                             raise Exception("Conversion failed")
-                    #finally if it is already a binary array, nothing needs to be done
+                    #finally if input is already an array of 0s and 1s, Transpose to be the same as DataFrame with columns=models and rows=reactions
                     elif np.isin(input, [0,1]).all():
                         input = np.asarray(input.T)
                     else:
-                        raise Exception("input type: {}".format(type(input))
+                        raise Exception("input type")
 
         single_input=False
         #test for single input (trips up NN)
@@ -112,17 +127,22 @@ class NN:
                 prediction = dict(zip(self.rxn_keys, np.squeeze(prediction)))
         else:
             raise Exception("data has wrong shape: ", input.shape, 'instead of ', self.network.input_shape)
+        # if DataFrame is given as input, output DataFrame
         if isinstance(input, pd.DataFrame):
             prediction = pd.DataFrame(index=self.rxn_keys, columns=df_columns, data=prediction.T)
         return prediction
 
     #function that generates a binary input based on a list of reaction ids
     def __convert_reaction_list(self, reaction_set):
+        """
+        function that can be used to convert a set of reactions to a binary list with the order self.rxn_keys
+        Input = the set of reactions that needs to be converted
+        """
         b_input = []
-        #need to take into account the annoying _c0 stuff
+        #I think that at this point this might be the only reason I would need modeltype, there are few things I am as annoyed with as the _c0
         if(self.modeltype=='ModelSEED'):
-            reaction_list = [reaction[:8] for reaction in reaction_set]
-            self.rxn_keys  = [key[:8] for key in self.rxn_keys]
+            reaction_list = [reaction[:8]+'_c0' if 'rxn' in reaction else reaction for reaction in reaction_set]
+            self.rxn_keys  = [key[:8]+'_c0' if 'rxn' in key else key for key in self.rxn_keys ]
         else:
             reaction_list = list(reaction_set)
         for i in self.rxn_keys:
