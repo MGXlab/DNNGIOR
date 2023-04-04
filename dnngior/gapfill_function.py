@@ -96,12 +96,7 @@ def build_gurobi_model(reaction_dict, metabolite_dict, objective_name, model_rea
             
             else:
                 print ('Cannot set objective for %s, not objective_name, model, export or candidate reaction!' %i.VarName)
-        
-    
-        
 
-        
-    
     else:
         for i in var:
             if i.VarName==objective_name:
@@ -119,12 +114,10 @@ def build_gurobi_model(reaction_dict, metabolite_dict, objective_name, model_rea
             
             else:
                 print ('Cannot set objective for %s, not objective_name, model, export or candidate reaction!' %i.VarName)
-        
-        
-        
-        
+
+
     m.setObjective(gu.LinExpr(coef, var), gu.GRB.MAXIMIZE) #set the objective expression
-    m.update()    
+    m.update() 
     #set the stoichiometric constraints for metabolites    
     for i in metabolite_dict:
         var = metabolite_dict[i].keys()
@@ -133,7 +126,7 @@ def build_gurobi_model(reaction_dict, metabolite_dict, objective_name, model_rea
         m.addLConstr(gu.LinExpr(coef, var), 'E', 0, i)  
         
     m.update()
-    m.setParam('OutputFlag', False) #Keep gurobi silent
+    m.setParam('OutputFlag', False) # Keep gurobi silent
     m.optimize()
     return m
 
@@ -219,12 +212,8 @@ def binarySearch(all_reactions_split, N, M, B, result_selection):
 
     max_obj = gu_model.getVarByName(B).X
     print ('Flux through biomass reaction is {:.8f}'.format(max_obj))
-    
-    
-    
-    
+
     #main loop
-    
     
     #there is no solution for the model,
     #probably the medium is too restrictive
@@ -236,11 +225,9 @@ def binarySearch(all_reactions_split, N, M, B, result_selection):
     print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
     
     
-    while abs(alpha - beta) > 1:#converting the "loop until" into a while loop
-    
+    while abs(alpha - beta) > 1:     
         
         sizeR = len(R[-1])
-        
         
         print("current R is: ", sizeR)
         
@@ -254,8 +241,7 @@ def binarySearch(all_reactions_split, N, M, B, result_selection):
             
             R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
             #proposed_model.append([var.VarName for var in gu_model.getVars() if var.VarName in N or gu_model.getVarByName(var.VarName).X > 0])
-            
-            
+                        
             # reaction fluxes
             R_flux.append([gu_model.getVarByName(e).X for e in M if np.round(gu_model.getVarByName(e).X,6) > 0])
             
@@ -366,24 +352,11 @@ def gapfill(all_reactions, draft_reaction_ids, candidate_reactions, obj_id, defa
     list of added reactions
     '''
     
-    
-    
-    
     all_reacs = deepcopy(all_reactions.reactions)
-    
-    
-    
-    
     
     all_reacs_obj = Reaction()
     all_reacs_obj.reactions = all_reacs.copy()
     cand_reacs = candidate_reactions.copy()
-    
-    
-    
-    
-
-    
     
     #Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
     for reaction in all_reacs_obj.reactions:
@@ -411,15 +384,13 @@ def gapfill(all_reactions, draft_reaction_ids, candidate_reactions, obj_id, defa
             if '_r' in reaction:
                 cand_reacs[reaction] = cand_reacs[forward_version] #Give reverse reaction same cost as forward version.
     
-        
     
     #Run gapfilling algorithm
     split_gapfill_result = binarySearch(all_reactions_split, draft_reaction_ids_split, cand_reacs, obj_id, result_selection)
     
     
-    
     if split_gapfill_result is None:
-        print("\n\n\n", "media is too restrictive. No growing model can be found :(", "\n\n\n")
+        print("\n\n\n", "media is too restrictive. No growing model can be found.", "\n\n\n")
         return None, None, None
     
     gapfill_result = set([r.replace('_r', '') for r in split_gapfill_result])

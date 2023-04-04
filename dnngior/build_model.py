@@ -52,10 +52,7 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None)
         unscalled=[]
     
     for metab in mc.metabolites:
-        
-        
-        
-        
+
         metabName = metab.id.split('_')[0]
         metabSufix = metab.id.split('_')[1]
         
@@ -120,8 +117,5 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None)
         if reaction.id not in unscalled:
             reaction.lower_bound *= scale
             reaction.upper_bound *= scale
-            
-        
-            
+
     return mc
-        
