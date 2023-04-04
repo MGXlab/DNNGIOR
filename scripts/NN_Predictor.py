@@ -25,7 +25,7 @@ class NN:
         PARAMETERS
         -------
         modeltype: string, optional
-            options are currently (ModelSEED or CarveMe)
+            options are currently (ModelSEED or BiGG)
         path: TYPE, optional
             path to NN (optional will default based on modeltype)
         custom: tuple, list, optional
@@ -47,8 +47,8 @@ class NN:
                     self.modeltype = modeltype
                     if self.modeltype == 'ModelSEED':
                         path = os.path.join(self.def_path, 'NN_MS.h5')
-                    elif self.modeltype == 'CarveMe':
-                        path = os.path.join(self.def_path, 'NN_CM.h5')
+                    elif self.modeltype == 'BiGG':
+                        path = os.path.join(self.def_path, 'NN_BG.h5')
                 else:
                     raise Exception('No path or recognised modeltype provided')
                 print('Loading default {} NN'.format(self.modeltype))
