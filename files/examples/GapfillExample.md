@@ -6,7 +6,7 @@ for this example, two things are needed:
 
 Can be obtained either from [ModelSeed's web interface](https://modelseed.org/), from [Kbase](https://www.kbase.us/), or following the instructions in [this notebook]().
 
-In this example, we use a [draft model](https://github.com/MGXlab/DNNGIOR/blob/main/files/models/bh_ungapfilled_model.sbml) that was obtained from a EMBL annotated fasta genome using the last approach. 
+In this example, we use a [draft model](https://github.com/MGXlab/DNNGIOR/blob/main/files/models/bh_ungapfilled_model.sbml) that was obtained from an ensembl genome using the last approach. 
 
 2. **A trained neural network**
 
