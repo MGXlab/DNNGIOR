@@ -4,7 +4,7 @@ for this example, two things are needed:
 
 1. **A draft model reconstructed using the ModelSEED pipeline**
 
-Can be obtained either from [ModelSeed's web interface](https://modelseed.org/), from [Kbase](https://www.kbase.us/), or following the instructions in [this notebook]().
+Can be obtained either from [ModelSeed's web interface](https://modelseed.org/), from [Kbase](https://www.kbase.us/), or following the instructions in [this notebook](https://github.com/MGXlab/DNNGIOR/blob/main/files/examples/Reconstructing_a_ModelSEED_model_from_a_fasta_genome.md).
 
 In this example, we use a [draft model](https://github.com/MGXlab/DNNGIOR/blob/main/files/models/bh_ungapfilled_model.sbml) that was obtained from an ensembl genome using the last approach. 
 
