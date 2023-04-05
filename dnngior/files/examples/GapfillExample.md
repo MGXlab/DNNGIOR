@@ -100,9 +100,8 @@ def_med["EX_cpd02557_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolit
 #diphosphate_e0
 def_med["EX_cpd02229_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd02229_e0":-1}}
 
-draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
-
-trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
+# draftModelPath = os.path.join(files_path, 'models', 'bh_ungapfilled_model.sbml')
+# trainedNNPath  = os.path.join(files_path, 'NN', 'NN_MS.h5')
 
 gf = dnngior.Gapfill(draftModelPath, trainedNNPath, medium = def_med, objectiveName = 'bio1')
 
@@ -111,6 +110,3 @@ model_defMedium = gf.gapfilledModel.copy()
 model_defMedium.optimize()
 
 ```
-
-
-
