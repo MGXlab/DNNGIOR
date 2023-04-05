@@ -7,47 +7,47 @@ Created on Tue Apr  4 22:42:00 2023
 from pathlib import Path
 import os
 import gurobipy as gu
-from reaction_class import Reaction
-import build_model
-from NN_Predictor import NN
 import cobra
 from copy import deepcopy
 import numpy as np
 
+from dnngior.variables import *
+from dnngior.reaction_class import Reaction
+from dnngior.NN_Predictor import NN
+from dnngior import build_model
+
 
 class Gapfill:
-    def __init__(self, draftModelPath, trainedNNPath = None, medium = None, objectiveName = 'bio1', dbType = 'ModelSEED'):
+    def __init__(self, 
+                draftModel, 
+                trainedNNPath = None, 
+                medium        = None, 
+                objectiveName = 'bio1', 
+                dbType        = 'ModelSEED'):
+
+        self.objectiveName    = objectiveName
+        self.trainedNNPath    = trainedNNPath
+        self.dbType           = dbType
+        self.draftModel       = cobra.io.read_sbml_model(draftModel)
+        self.draft_reaction   = Reaction( model = draftModel )
+        self.medium           = medium
+        self.result_selection = "min_reactions"
+
+        if dbType == "ModelSEED":
+            self.path_to_biochem  = MODELSEED_REACTIONS
+        else:
+            return "dbType %s is currently not supported" % dbType
+
+
+        # Build a Reaction object for the exchange reactions; 
+        # if you have a defined medium, set the fixed_bounds argument accordingly
+        self.exchange_reacs = Reaction( model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'),
+                                       fixed_bounds = self.medium)
         
-        
-        self.objectiveName = objectiveName
-        self.trainedNNPath = trainedNNPath
-        self.dbType = dbType
-        # Set paths to
-        self.draftModelPath = draftModelPath
-        self.files_path  = os.path.join(Path(os.getcwd()).parents[0], 'files')
-        self.models_path = os.path.join(self.files_path, 'models')
-        
-        
-        
-        self.path_to_biochem  = os.path.join(self.files_path,  'biochemistry', 'reactions.tsv')
-        
-        
-        
-        
-        self.draftModel = cobra.io.read_sbml_model(self.draftModelPath)
-        self.draft_reaction = Reaction( model = self.draftModelPath )
-        self.medium = medium
-        
-        
-        # Build a Reaction object for the exchange reactions; if you have a defined medium, set the fixed_bounds argument accordingly
-        self.exchange_reacs = Reaction( model = os.path.join(self.models_path, 'exchangeReactions.sbml'),
-                          fixed_bounds = self.medium)
-        
-        self.db_reactions = Reaction(biochem_input = self.path_to_biochem)
+        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem)
         self.db_reactions.reactions = self.db_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
         
-        self.all_reactions = Reaction(fixed_bounds = self.medium)
-        
+        self.all_reactions           = Reaction(fixed_bounds = self.medium) 
         self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.db_reactions.reactions)
         
         self.draft_reaction_ids = set(self.draft_reaction.reactions)
@@ -69,47 +69,39 @@ class Gapfill:
         self.weights = {}
         
         if self.trainedNNPath is not None:
-            # predict weights
             
+            # Predict weights
             p = NN(path = self.trainedNNPath).predict( self.draft_reaction_ids) 
             
             for i in p:
                 self.weights[i]  = np.round(1-p[i], 10)
-        
-        
-            self.model_NN_gf = self.gapfill( self.all_reactions,
-                                       self.draft_reaction_ids,
-                                       self.weights,
-                                       self.objectiveName,
-                                       result_selection = 'min_reactions')
-    
-            
+
+            model_NN_gf = self.gapfill(self.all_reactions,
+                                            self.draft_reaction_ids,
+                                            self.weights,
+                                            self.objectiveName,
+                                            self.result_selection
+                                        )
+
             if self.medium is not None:
-                self.gapfilledModel = build_model.refine_model(self.model_NN_gf, self.draftModel, unscalled = list(self.medium.keys()))
+                self.gapfilledModel = build_model.refine_model(model_NN_gf, self.draftModel, unscalled = list(self.medium.keys()))
+
             else:
-                
+
                 if self.dbType=='BiGG':
-                    self.gapfilledModel = self.model_NN_gf
-                
+                    self.gapfilledModel = model_NN_gf
+
                 else:
-                    self.gapfilledModel = build_model.refine_model(self.model_NN_gf, self.draftModel)
+                    self.gapfilledModel = build_model.refine_model(model_NN_gf, self.draftModel)
                 
-                                                                    
-
-
-
-        
-    
-        
-    
-        
     def gapfill(self, 
                 all_reactions, 
                 draft_reaction_ids, 
                 candidate_reactions, 
                 obj_id, 
+                result_selection,
                 default_cost = 1, 
-                result_selection = 'min_cost'):
+                ):
         
         '''
         Gapfill an incomplete model
@@ -148,12 +140,12 @@ class Gapfill:
         all_reacs_obj.reactions = all_reacs.copy()
         cand_reacs = candidate_reactions.copy()
         
-        #Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
+        # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
         for reaction in all_reacs_obj.reactions:
             if (reaction not in draft_reaction_ids) and (reaction not in cand_reacs):
                 cand_reacs[reaction] = default_cost
         
-        #Delete reaction from candidate_reactions if it is present in the starting model.
+        # Delete reaction from candidate_reactions if it is present in the starting model.
         for reaction in candidate_reactions:
             if reaction in draft_reaction_ids:
                 del cand_reacs[reaction]    
@@ -163,29 +155,30 @@ class Gapfill:
         
         all_reactions_split.reactions = all_reacs_obj.split_all_bidirectional_reactions(all_reacs_obj.reactions)
         
-        #Add reverse reactions to draft_reaction_ids_split and candidate_reactions.
+        # Add reverse reactions to draft_reaction_ids_split and candidate_reactions.
         draft_reaction_ids_split = set()
         
         for reaction in all_reactions_split.reactions:
             forward_version = reaction.replace('_r', '')
             if forward_version in draft_reaction_ids:
                 draft_reaction_ids_split.add(reaction)
-            #If forward version of a reverse reaction is in candidate_reactions.
+            
+            # If forward version of a reverse reaction is in candidate_reactions.
             else:
                 if '_r' in reaction:
-                    #Give reverse reaction same cost as forward version.
+                    # Give reverse reaction same cost as forward version.
                     cand_reacs[reaction] = cand_reacs[forward_version] 
-        
-            
-        
-        #Run gapfilling algorithm
+
+
+        # Run gapfilling algorithm
         split_gapfill_result = self.binarySearch(all_reactions_split, 
                                                  draft_reaction_ids_split, 
-                                                 cand_reacs, obj_id, 
-                                                 result_selection)
+                                                 cand_reacs, 
+                                                 obj_id, 
+                                                 )
         
         
-        #if the database and media did not result in a functional model
+        # If the database and media did not result in a functional model
         if split_gapfill_result is None:
             print("\n\n\n", "media is too restrictive. No growing model can be found :(", "\n\n\n")
             return None, None, None
@@ -196,7 +189,7 @@ class Gapfill:
         
         gapfill_result.update(draft_reaction_ids)
         
-        #Create cobra model
+        # Create cobra model
         metab_dict      = all_reacs_obj.get_gurobi_metabolite_dict()
         cobra_model     = self.make_cobra_model(all_reacs, 
                                                 metab_dict, 
@@ -204,7 +197,6 @@ class Gapfill:
                                                 obj_id) 
         self.objective_value = cobra_model.optimize().objective_value    
         print ('Objective value is %f.' %self.objective_value)
-    
        
         return cobra_model
     
@@ -212,8 +204,8 @@ class Gapfill:
                      all_reactions_split, 
                      N, 
                      M, 
-                     B, 
-                     result_selection):
+                     B
+                     ):
         """
         Function modified from Latendresse BMC Bioinformatics 2014.
         Input:
@@ -230,10 +222,10 @@ class Gapfill:
         Output:
             List of the minimum set of candidate reactions to add to gapfill the model.
         """
-        R = [] #reaction sets
+        R      = [] #reaction sets
         R_flux = [] #reaction fluxes
         R_cost = [] #reaction costs
-        D = [] #deltas
+        D      = [] #deltas
         proposed_model = []
         
         alpha = 0
@@ -242,31 +234,27 @@ class Gapfill:
         x = [i for i in M if i not in N]
         
         
-        #format reactions for gurobi model
+        # Format reactions for gurobi model
         reaction_dict = all_reactions_split.get_gurobi_reaction_dict(all_reactions_split.reactions.keys())
         
-        #format metabolites for gurobi_model
+        # Format metabolites for gurobi_model
         metabolite_dict = all_reactions_split.get_gurobi_metabolite_dict(all_reactions_split.reactions.keys())
         
-        #check if the model is gapfillable :)
-        gu_model = self.build_gurobi_model(reaction_dict, metabolite_dict, B, N, M, delta=1)
+        # Check if the model is gapfillable :)
+        gu_model = self.build_gurobi_model(reaction_dict, metabolite_dict, B, N, M, delta = 1)
         
         
         R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
     
         max_obj = gu_model.getVarByName(B).X
         print ('Flux through biomass reaction is {:.8f}'.format(max_obj))
-        
-        
-        #main loop
-        
+                
         
         #there is no solution for the model,
         #probably the medium is too restrictive
         if np.round(gu_model.getVarByName(B).X,6) ==0:
             
             return None
-        
         
         print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
         
@@ -287,25 +275,17 @@ class Gapfill:
                 print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
                 
                 R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
-                #proposed_model.append([var.VarName for var in gu_model.getVars() if var.VarName in N or gu_model.getVarByName(var.VarName).X > 0])
                 
-                
-                # reaction fluxes
+                # Reaction fluxes
                 R_flux.append([gu_model.getVarByName(e).X for e in M if np.round(gu_model.getVarByName(e).X,6) > 0])
                 
-                #costs of candidate reactions retained in the model
+                # Costs of candidate reactions retained in the model
                 R_cost.append([M[e] for e in M if gu_model.getVarByName(e).X > 0])
                 
-                #delta
+                # Delta
                 D.append(delta)
                 
                 beta = delta
-                
-                #if len(R[-1])<sizeR:
-                    
-                    
-                #else:
-                    
                
             else:
                 alpha = delta
@@ -315,7 +295,10 @@ class Gapfill:
                 #alpha = delta
                 pass
             print('\n\n', 'condition is currently: ', abs(alpha - beta), '\n\n')
-        minimum_set = self.get_minimum(R, R_flux, R_cost, result_selection) #List that has minimum nr of reactions, sum of cost or sum of flux, dependend on output.
+        
+        # List that has minimum nr of reactions, sum of cost or sum of flux, dependend on output.
+        minimum_set = self.get_minimum(R, R_flux, R_cost, criteria = self.result_selection) 
+
         return  minimum_set
     
     def build_gurobi_model(self, 
@@ -368,16 +351,17 @@ class Gapfill:
         """
         #define the model
         
-        m= gu.Model('mipl')
-        #define variables
+        m = gu.Model('mipl')
+
+        # Define variables
         for i in reaction_dict:
-            b=m.addVar(vtype= gu.GRB.CONTINUOUS, name = i, lb = reaction_dict[i][0], ub = reaction_dict[i][1])
-                
+            b = m.addVar(vtype = gu.GRB.CONTINUOUS, name = i, lb = reaction_dict[i][0], ub = reaction_dict[i][1])
+
         m.update()
-        #set the objective function
+
+        # Set the objective function
         var = m.getVars()
         coef=[]
-        
         
         if delta >1:
             for i in var:
@@ -391,34 +375,30 @@ class Gapfill:
                 elif i.VarName in model_reactions: #reactions in the draft model have cost zero
                     coef.append(0)
                 
-            # elif i.VarName in export_reactions: #export reactions have cost zero
-            #     coef.append(0)
-                
                 else:
                     print ('Cannot set objective for %s, not objective_name, model, export or candidate reaction!' %i.VarName)
         
         else:
             for i in var:
-                if i.VarName==objective_name:
+                if i.VarName == objective_name:
                     coef.append(1)
-                    
+
                 elif i.VarName in candidate_reactions:
                     cost = candidate_reactions[i.VarName]
                     coef.append(0) #Costs are assumed to be positive numbers in input.
-                    
+
                 elif i.VarName in model_reactions: #reactions in the draft model have cost zero
                     coef.append(0)
-                
-                
+
                 else:
                     print ('Cannot set objective for %s, not objective_name, model, export or candidate reaction!' %i.VarName)
             
-            
-            
-            
-        m.setObjective(gu.LinExpr(coef, var), gu.GRB.MAXIMIZE) #set the objective expression
+ 
+        # Set the objective expression
+        m.setObjective(gu.LinExpr(coef, var), gu.GRB.MAXIMIZE) 
         m.update()    
-        #set the stoichiometric constraints for metabolites    
+        
+        # Set the stoichiometric constraints for metabolites    
         for i in metabolite_dict:
             var = metabolite_dict[i].keys()
             var = [m.getVarByName(z) for z in var]
@@ -426,8 +406,10 @@ class Gapfill:
             m.addLConstr(gu.LinExpr(coef, var), 'E', 0, i)  
             
         m.update()
-        m.setParam('OutputFlag', False) #Keep gurobi silent
+        # Keep gurobi silent
+        m.setParam('OutputFlag', False) 
         m.optimize()
+ 
         return m
     
     def get_minimum(self, 
@@ -450,7 +432,6 @@ class Gapfill:
         Returns
         ------
         The selected reaction set and the value of delta
-            
         '''
         
         if criteria == 'min_cost':
@@ -476,7 +457,6 @@ class Gapfill:
         
         else:
             return R[-1]
-    
     
     def make_cobra_metabolites(self, 
                                metab_dict):

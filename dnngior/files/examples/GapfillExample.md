@@ -22,9 +22,12 @@ We start by gapfilling a model in a complete media:
 import dnngior
 import cobra
 
-draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
+from pathlib import Path
+import os
 
-trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
+files_path     = Path(os.getcwd()).parents[0]
+draftModelPath = os.path.join(files_path, 'models', 'bh_ungapfilled_model.sbml')
+trainedNNPath  = os.path.join(files_path, 'NN', 'NN_MS.h5')
 
 gf = dnngior.Gapfill(draftModelPath, trainedNNPath, medium = None, objectiveName = 'bio1')
 
@@ -41,9 +44,8 @@ The "model_completeMedium" object is a gapfilled cobrapy model. A list with the 
 addedReacts = gf.added_reactions
 
 for reaction in addedReacts:
-    print(reaction, "~~", model_completeMedium.reactions.get_by_id[reaction].build_reaction_string(use_metabolite_names = 1), '\n\n')
+    print(reaction, "~~", model_completeMedium.reactions.get_by_id(reaction).build_reaction_string(use_metabolite_names = 1), '\n\n')
 ```
-
 
 
 Now, if we have a defined medium where the model should grow. We repeat the the same steps as above, but provide a "medium" argument to the "dnngior.Gapfill" class as the following example:
