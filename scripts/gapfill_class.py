@@ -16,11 +16,12 @@ import numpy as np
 
 
 class Gapfill:
-    def __init__(self, draftModelPath, trainedNNPath = None, medium = None, objectiveName = 'bio1'):
+    def __init__(self, draftModelPath, trainedNNPath = None, medium = None, objectiveName = 'bio1', dbType = 'ModelSEED'):
+        
         
         self.objectiveName = objectiveName
         self.trainedNNPath = trainedNNPath
-        
+        self.dbType = dbType
         # Set paths to
         self.draftModelPath = draftModelPath
         self.files_path  = os.path.join(Path(os.getcwd()).parents[0], 'files')
@@ -87,7 +88,11 @@ class Gapfill:
                 self.gapfilledModel = build_model.refine_model(self.model_NN_gf, self.draftModel, unscalled = list(self.medium.keys()))
             else:
                 
-                self.gapfilledModel = build_model.refine_model(self.model_NN_gf, self.draftModel)
+                if self.dbType=='BiGG':
+                    self.gapfilledModel = self.model_NN_gf
+                
+                else:
+                    self.gapfilledModel = build_model.refine_model(self.model_NN_gf, self.draftModel)
                 
                                                                     
 
@@ -531,91 +536,91 @@ class Gapfill:
 
 ########### with a defined medium #########################
 # Here goes your medium if you want to have a defined one
-def_med = {}
+# def_med = {}
 
-#H2O
-def_med["EX_cpd00001_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00001_e0":-1}}
-#Phosphate
-def_med["EX_cpd00009_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00009_e0":-1}}
-#CO2
-def_med["EX_cpd00011_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00011_e0":-1}}
-#NH3
-def_med["EX_cpd00013_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00013_e0":-1}}
-#D-Glucose
-def_med["EX_cpd00027_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00027_e0":-1}}
-#Mn2+
-def_med["EX_cpd00030_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00030_e0":-1}}
-#Zn2+
-def_med["EX_cpd00034_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00034_e0":-1}}
-#Sulfate
-def_med["EX_cpd00048_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00048_e0":-1}}
-#Cu2+
-def_med["EX_cpd00058_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00058_e0":-1}}
-#Ca2+
-def_med["EX_cpd00063_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00063_e0":-1}}
-#H+
-def_med["EX_cpd00067_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00067_e0":-1}}
-#Cl-
-def_med["EX_cpd00099_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00099_e0":-1}}
-#Co2+
-def_med["EX_cpd00149_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00149_e0":-1}}
-#K+
-def_med["EX_cpd00205_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00205_e0":-1}}
-#Mg
-def_med["EX_cpd00254_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00254_e0":-1}}
-#Na+
-def_med["EX_cpd00971_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00971_e0":-1}}
-#Fe2+
-def_med["EX_cpd10515_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd10515_e0":-1}}
-#fe3	
-def_med["EX_cpd10516_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd10516_e0":-1}}
-#core oligosaccharide lipid A_e0
-def_med["EX_cpd15432_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd15432_e0":-1}}
-#two linked disacharide pentapeptide murein units (uncrosslinked, middle of chain)_e0
-def_med["EX_cpd15511_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd15511_e0":-1}}
-#Farnesylfarnesylgeraniol_e0
-def_med["EX_cpd02557_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd02557_e0":-1}}
-#diphosphate_e0
-def_med["EX_cpd02229_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd02229_e0":-1}}
-
-
-draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
-
-trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
+# #H2O
+# def_med["EX_cpd00001_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00001_e0":-1}}
+# #Phosphate
+# def_med["EX_cpd00009_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00009_e0":-1}}
+# #CO2
+# def_med["EX_cpd00011_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00011_e0":-1}}
+# #NH3
+# def_med["EX_cpd00013_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00013_e0":-1}}
+# #D-Glucose
+# def_med["EX_cpd00027_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00027_e0":-1}}
+# #Mn2+
+# def_med["EX_cpd00030_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00030_e0":-1}}
+# #Zn2+
+# def_med["EX_cpd00034_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00034_e0":-1}}
+# #Sulfate
+# def_med["EX_cpd00048_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00048_e0":-1}}
+# #Cu2+
+# def_med["EX_cpd00058_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00058_e0":-1}}
+# #Ca2+
+# def_med["EX_cpd00063_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00063_e0":-1}}
+# #H+
+# def_med["EX_cpd00067_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00067_e0":-1}}
+# #Cl-
+# def_med["EX_cpd00099_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00099_e0":-1}}
+# #Co2+
+# def_med["EX_cpd00149_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00149_e0":-1}}
+# #K+
+# def_med["EX_cpd00205_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00205_e0":-1}}
+# #Mg
+# def_med["EX_cpd00254_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00254_e0":-1}}
+# #Na+
+# def_med["EX_cpd00971_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd00971_e0":-1}}
+# #Fe2+
+# def_med["EX_cpd10515_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd10515_e0":-1}}
+# #fe3	
+# def_med["EX_cpd10516_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd10516_e0":-1}}
+# #core oligosaccharide lipid A_e0
+# def_med["EX_cpd15432_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd15432_e0":-1}}
+# #two linked disacharide pentapeptide murein units (uncrosslinked, middle of chain)_e0
+# def_med["EX_cpd15511_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd15511_e0":-1}}
+# #Farnesylfarnesylgeraniol_e0
+# def_med["EX_cpd02557_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd02557_e0":-1}}
+# #diphosphate_e0
+# def_med["EX_cpd02229_e0"] = {'lower_bound': -100, 'upper_bound': 100, 'metabolites': {"cpd02229_e0":-1}}
 
 
+# draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
 
-gf = Gapfill(draftModelPath, trainedNNPath, medium = def_med, objectiveName = 'bio1')
-
-#new reactions
-#print(gf.added_reactions)
-
-#gapfilled objective
-#print(gf.objective_value)
-
-#gapfilled model
-model_defMedium = gf.gapfilledModel.copy()
-model_defMedium.optimize()
-
-#####################################################################################################
-
-########## without a medium ##############
-
-draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
-
-trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
+# trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
 
 
 
-gf = Gapfill(draftModelPath, trainedNNPath, medium = None, objectiveName = 'bio1')
+# gf = Gapfill(draftModelPath, trainedNNPath, medium = def_med, objectiveName = 'bio1')
 
-#new reactions
-#print(gf.added_reactions)
+# #new reactions
+# #print(gf.added_reactions)
 
-#gapfilled objective
-#print(gf.objective_value)
+# #gapfilled objective
+# #print(gf.objective_value)
 
-#gapfilled model
-model_completeMedium = gf.gapfilledModel.copy()
-model_completeMedium.optimize()
+# #gapfilled model
+# model_defMedium = gf.gapfilledModel.copy()
+# model_defMedium.optimize()
+
+# #####################################################################################################
+
+# ########## without a medium ##############
+
+# draftModelPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'models', 'bh_ungapfilled_model.sbml')
+
+# trainedNNPath = os.path.join(Path(os.getcwd()).parents[0], 'files', 'NN', 'NN_MS.h5')
+
+
+
+# gf = Gapfill(draftModelPath, trainedNNPath, medium = None, objectiveName = 'bio1')
+
+# #new reactions
+# #print(gf.added_reactions)
+
+# #gapfilled objective
+# #print(gf.objective_value)
+
+# #gapfilled model
+# model_completeMedium = gf.gapfilledModel.copy()
+# model_completeMedium.optimize()
 
