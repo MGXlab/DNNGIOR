@@ -115,7 +115,8 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None)
     for reaction in mc.reactions:
         
         if reaction.id not in unscalled:
-            reaction.lower_bound *= scale
             reaction.upper_bound *= scale
+            reaction.lower_bound *= scale
+
 
     return mc
