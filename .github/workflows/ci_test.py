@@ -2,7 +2,6 @@ import dnngior
 import cobra
 import os
 
-
 import gurobipy as gp
 from gurobipy import GRB
 
