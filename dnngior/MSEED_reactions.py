@@ -5,27 +5,32 @@ import copy
 import itertools
 from csv import DictReader
 from pathlib import Path
-
+import tarfile
 
 class Reactions:
     def __init__(self, rxns_file='reactions.tsv'):
         
-        self.path = Path(os.path.dirname(__file__))
+        self.path        = Path(os.path.dirname(__file__))
         self.BiochemRoot = os.path.join(self.path, 'files', 'biochemistry')
 
-        
-        self.RxnsFile = os.path.join(self.BiochemRoot, rxns_file)
-        self.AliasFile = os.path.join(self.BiochemRoot,  "Aliases", "Unique_ModelSEED_Reaction_Aliases.txt")
-        self.NameFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Names.txt")
-        self.PwyFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Pathways.txt")
-        self.ECFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_ECs.txt")
+        # if rxns_file == "reactions.tsv":
+        #     ff = Path(os.path.join(self.BiochemRoot, rxns_file))
+        #     if not ff.is_file():
+        #         file = tarfile.open(os.path.join(self.BiochemRoot, 'reactions.tsv.tar.gz'))
+        #         file.extractall(self.BiochemRoot)
+
+        self.RxnsFile  = os.path.join(self.BiochemRoot, rxns_file)
+        self.AliasFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Aliases.txt")
+        self.NameFile  = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Names.txt")
+        self.PwyFile   = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Pathways.txt")
+        self.ECFile    = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_ECs.txt")
 
         reader = DictReader(open(self.RxnsFile), dialect='excel-tab')
         self.Headers = reader.fieldnames
 
         from dnngior.MSEED_compounds import Compounds
         self.CompoundsHelper = Compounds()
-        self.Compounds_Dict = self.CompoundsHelper.loadCompounds()
+        self.Compounds_Dict  = self.CompoundsHelper.loadCompounds()
 
     def loadReactions(self):
         reader = DictReader(open(self.RxnsFile), dialect='excel-tab')
