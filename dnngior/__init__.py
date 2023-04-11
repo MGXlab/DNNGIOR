@@ -1,3 +1,5 @@
+__version__ = "0.0.3"
+
 import os
 import tarfile
 from pathlib import Path
