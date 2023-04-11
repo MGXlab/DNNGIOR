@@ -81,11 +81,11 @@ class Gapfill:
                 self.weights[i]  = np.round(1-p[i], 10)
 
             model_NN_gf = self.gapfill(self.all_reactions,
-                                            self.draft_reaction_ids,
-                                            self.weights,
-                                            self.objectiveName,
-                                            self.result_selection
-                                        )
+                                       self.draft_reaction_ids,
+                                       self.weights,
+                                       self.objectiveName,
+                                       self.result_selection
+                                       )
 
             if self.medium is not None:
                 self.gapfilledModel = build_model.refine_model(model_NN_gf, self.draftModel, unscalled = list(self.medium.keys()))
