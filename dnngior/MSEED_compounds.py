@@ -10,23 +10,24 @@ import os
 import json
 from csv import DictReader
 from pathlib import Path
-
+import tarfile
 
 class Compounds:
     def __init__(self, cpds_file='compounds.tsv'):
 
-        self.path = Path(os.path.dirname(__file__))
+        self.path        = Path(os.path.dirname(__file__))
         self.BiochemRoot = os.path.join(self.path, 'files', 'biochemistry')
-        self.CpdsFile = os.path.join(self.BiochemRoot, cpds_file)
-        self.AliasFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Compound_Aliases.txt")
-        self.NameFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Compound_Names.txt")
-        self.StructRoot = os.path.join(self.BiochemRoot, "Structures")
 
-        reader = DictReader(open(self.CpdsFile), dialect='excel-tab')
+        self.CpdsFile    = os.path.join(self.BiochemRoot, cpds_file)
+        self.AliasFile   = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Compound_Aliases.txt")
+        self.NameFile    = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Compound_Names.txt")
+        self.StructRoot  = os.path.join(self.BiochemRoot, "Structures")
+
+        reader       = DictReader(open(self.CpdsFile), dialect='excel-tab')
         self.Headers = reader.fieldnames
 
     def loadCompounds(self):
-        reader = DictReader(open(self.CpdsFile), dialect='excel-tab')
+        reader       = DictReader(open(self.CpdsFile), dialect='excel-tab')
         type_mapping = {"is_core": int, "is_obsolete": int, "is_cofactor": int, "charge": int,
                         "mass": float, "deltag": float, "deltagerr": float}
         lists = ["aliases","notes"]
@@ -332,6 +333,6 @@ class Compounds:
             new_compounds_dict.append(cpd_obj)
 
         # Print to JSON
-        cpds_file = open(cpds_root + ".json", 'w', newline='\n')
-        cpds_file.write(json.dumps(new_compounds_dict, indent=4, sort_keys=True))
-        cpds_file.close()
+        # cpds_file = open(cpds_root + ".json", 'w', newline='\n')
+        # cpds_file.write(json.dumps(new_compounds_dict, indent=4, sort_keys=True))
+        # cpds_file.close()
