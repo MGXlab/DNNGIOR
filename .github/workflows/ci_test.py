@@ -12,7 +12,7 @@ params["LICENSEID"]  = 962454
 
 gp.Env(params=params) 
 
-base_path  = "/".join(os.getcwd().split("/")[:-2])
+base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
 draftModel = os.path.join(base_path, "dnngior/files/models/e_coli_core_Seed.sbml")
 
 gapfill            = dnngior.Gapfill(draftModel, medium = None, objectiveName = 'bio1')
