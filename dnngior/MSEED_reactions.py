@@ -5,19 +5,12 @@ import copy
 import itertools
 from csv import DictReader
 from pathlib import Path
-import tarfile
 
 class Reactions:
     def __init__(self, rxns_file='reactions.tsv'):
         
         self.path        = Path(os.path.dirname(__file__))
         self.BiochemRoot = os.path.join(self.path, 'files', 'biochemistry')
-
-        # if rxns_file == "reactions.tsv":
-        #     ff = Path(os.path.join(self.BiochemRoot, rxns_file))
-        #     if not ff.is_file():
-        #         file = tarfile.open(os.path.join(self.BiochemRoot, 'reactions.tsv.tar.gz'))
-        #         file.extractall(self.BiochemRoot)
 
         self.RxnsFile  = os.path.join(self.BiochemRoot, rxns_file)
         self.AliasFile = os.path.join(self.BiochemRoot, "Aliases", "Unique_ModelSEED_Reaction_Aliases.txt")

@@ -10,7 +10,6 @@ import os
 import json
 from csv import DictReader
 from pathlib import Path
-import tarfile
 
 class Compounds:
     def __init__(self, cpds_file='compounds.tsv'):
