@@ -78,8 +78,13 @@ class Gapfill:
             p = NN(path = self.trainedNNPath).predict( self.draft_reaction_ids ) 
             
             for i in p:
+
                 self.weights[i]  = np.round(1-p[i], 10)
 
+            if self.medium is not None:
+                for i in self.exchange_reacs.reactions:
+                    if i not in self.medium:
+                        self.weights[i] = 1000
 
             model_NN_gf = self.gapfill(self.all_reactions,
                                        self.draft_reaction_ids,
