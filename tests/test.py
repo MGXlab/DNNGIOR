@@ -14,19 +14,15 @@ from dnngior.reaction_class import Reaction
 
 from dnngior.build_model import *
 
-
 from pathlib import Path
 path = Path.cwd()
 
-# --------
 import dnngior
 import cobra
 import os
 
 import gurobipy as gp
 from gurobipy import GRB
-
-
 
 
 # Example 1. Gapfilling a model using a complete medium
