@@ -31,12 +31,14 @@ from gurobipy import GRB
 base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
 draftModel = os.path.join(base_path, "docs/models/bh_ungapfilled_model.sbml")
 
-gapfill            = dnngior.Gapfill(draftModel, medium = None, objectiveName = 'bio1')
-gf_model_compl_med = gapfill.gapfilledModel.copy()
+gapfill_compl      = dnngior.Gapfill(draftModel, medium = None, objectiveName = 'bio1')
+gf_model_compl_med = gapfill_compl.gapfilledModel.copy()
 
-print("NN gapfilling added {} new readctions".format(len(gapfill.added_reactions)))
+print("NN gapfilling added {} new readctions".format(len(gapfill_compl.added_reactions)))
 print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(gf_model_compl_med.metabolites), len(gf_model_compl_med.reactions)))
 
+for reaction in gapfill_compl.added_reactions:
+    print(reaction)
 
 # Example 2. Gapfilling a model using a defined medium
 # ------------------------------------------------------
@@ -50,9 +52,12 @@ with open(media_file) as f:
         a = line.strip().split('\t')
         Nit_media['EX_' + a[0] + '_e0'] = {'lower_bound':-1, 'upper_bound':1, 'metabolites':{a[0]+'_e0':-1.0}}
 
-gapfill          = dnngior.Gapfill(draftModel, medium = Nit_media, objectiveName = 'bio1')
-gf_model_Nit_med = gapfill.gapfilledModel.copy()
+gapfill_nitr     = dnngior.Gapfill(draftModel, medium = Nit_media, objectiveName = 'bio1')
+gf_model_Nit_med = gapfill_nitr.gapfilledModel.copy()
 
-print("NN gapfilling added {} new readctions".format(len(gapfill.added_reactions)))
+print("NN gapfilling added {} new readctions".format(len(gapfill_nitr.added_reactions)))
 print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(gf_model_Nit_med.metabolites), len(gf_model_Nit_med.reactions)))
 
+
+for reaction in gapfill_nitr.added_reactions:
+    print(reaction)
