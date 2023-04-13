@@ -70,21 +70,13 @@ class Gapfill:
                     self.all_reactions.reactions[react]["lower_bound"] = 0
             ####################################################
         
-        self.weights = {}
-        
+        self.weights = {}        
         if self.trainedNNPath is not None:
             
             # Predict weights
             p = NN(path = self.trainedNNPath).predict( self.draft_reaction_ids ) 
-            
             for i in p:
-
                 self.weights[i]  = np.round(1-p[i], 10)
-
-            if self.medium is not None:
-                for i in self.exchange_reacs.reactions:
-                    if i not in self.medium:
-                        self.weights[i] = 1000
 
             model_NN_gf = self.gapfill(self.all_reactions,
                                        self.draft_reaction_ids,
@@ -93,14 +85,33 @@ class Gapfill:
                                        self.result_selection
                                        )
 
+            # In case of a defined medium that is not enought for the species to grow, add extra weights
+            if model_NN_gf == None and self.medium is not None:
+
+                print("Use extra reactions not included in the media, using a penalty.")
+
+                for i in self.exchange_reacs.reactions:
+                    if i not in self.medium:
+                        self.weights[i] = 1000
+
+                model_NN_gf = self.gapfill(self.all_reactions,
+                                        self.draft_reaction_ids,
+                                        self.weights,
+                                        self.objectiveName,
+                                        self.result_selection
+                                        )
+
+                if model_NN_gf == None:
+                    raise ValueError("dnngior in not able to gapfill your model using this objective function and medium.")
+
+
+            # Refine model based on the gapfill findings
             if self.medium is not None:
                 self.gapfilledModel = build_model.refine_model(model_NN_gf, 
                                                                self.draftModel, 
                                                                unscalled = list(self.medium.keys()))
-
             else:
-                self.gapfilledModel = build_model.refine_model(model_NN_gf, 
-                                                               self.draftModel)
+                self.gapfilledModel = build_model.refine_model(model_NN_gf, self.draftModel)
 
     def build_gurobi_model(self, 
                            reaction_dict, 
@@ -397,8 +408,11 @@ class Gapfill:
         
         # If the database and media did not result in a functional model
         if split_gapfill_result is None:
-            raise ValueError("Media is too restrictive. No growing model can be found :( \n\n\n")
-        
+            # raise ValueError
+            print("Media is too restrictive. No growing model can be found :( \n\n\n")
+            return None
+
+
         gapfill_result = set([r.replace('_r', '') for r in split_gapfill_result])
         
         self.added_reactions = list(gapfill_result) #All reactions that are added to the model during gapfilling.
@@ -449,7 +463,6 @@ class Gapfill:
         
         x = [i for i in M if i not in N]
         
-        
         # Format reactions for gurobi model
         reaction_dict = all_reactions_split.get_gurobi_reaction_dict(all_reactions_split.reactions.keys())
         
@@ -477,17 +490,13 @@ class Gapfill:
         while abs(alpha - beta) > 1:
             
             sizeR = len(R[-1])
-            
-            
-            print("current R is: ", sizeR)
-            
+                        
             delta = int((alpha + beta) / 2.0)
-            print ('Delta is {:.2f}'.format(delta))
             
             gu_model = self.build_gurobi_model(reaction_dict, metabolite_dict, B, N, M, delta)
             
             if np.round(gu_model.getVarByName(B).X,6) > 0:
-                print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
+                # print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
                 
                 R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
                 
@@ -506,7 +515,7 @@ class Gapfill:
                 alpha = delta
                 #R[-1] = R[-1]
                 #proposed_model[-1] = proposed_model[-2]
-                print ('Flux through objective reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
+                # print ('Flux through objective reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
                 #alpha = delta
                 pass
             print('\n\n', 'condition is currently: ', abs(alpha - beta), '\n\n')
