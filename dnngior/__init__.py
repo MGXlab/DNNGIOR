@@ -1,6 +1,7 @@
 __version__ = "0.0.3"
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tarfile
 from pathlib import Path
 
