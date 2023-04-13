@@ -29,7 +29,7 @@ from gurobipy import GRB
 # -----------------------------------------------------
 
 base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
-draftModel = os.path.join(base_path, "docs/models/bh_gapfilled_model.sbml")
+draftModel = os.path.join(base_path, "docs/models/bh_ungapfilled_model.sbml")
 
 gapfill            = dnngior.Gapfill(draftModel, medium = None, objectiveName = 'bio1')
 gf_model_compl_med = gapfill.gapfilledModel.copy()
@@ -49,7 +49,6 @@ with open(media_file) as f:
     for line in f:
         a = line.strip().split('\t')
         Nit_media['EX_' + a[0] + '_e0'] = {'lower_bound':-1, 'upper_bound':1, 'metabolites':{a[0]+'_e0':-1.0}}
-
 
 gapfill          = dnngior.Gapfill(draftModel, medium = Nit_media, objectiveName = 'bio1')
 gf_model_Nit_med = gapfill.gapfilledModel.copy()

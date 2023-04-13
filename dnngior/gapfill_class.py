@@ -397,8 +397,7 @@ class Gapfill:
         
         # If the database and media did not result in a functional model
         if split_gapfill_result is None:
-            print("\n\n\n", "media is too restrictive. No growing model can be found :(", "\n\n\n")
-            return None, None, None
+            raise ValueError("Media is too restrictive. No growing model can be found :( \n\n\n")
         
         gapfill_result = set([r.replace('_r', '') for r in split_gapfill_result])
         
