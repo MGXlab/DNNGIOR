@@ -86,13 +86,15 @@ class Gapfill:
                                        )
 
             # In case of a defined medium that is not enought for the species to grow, add extra weights
-            if model_NN_gf == None and self.medium is not None:
+            if model_NN_gf is None:
 
                 print("Use extra reactions not included in the media, using a penalty.")
 
-                for i in self.exchange_reacs.reactions:
-                    if i not in self.medium:
-                        self.weights[i] = 1000
+                for exch_reaction in self.exchange_reacs.reactions:
+                    
+                    if exch_reaction not in self.medium:
+                        self.weights[exch_reaction] = 1000
+                        self.all_reactions.reactions[exch_reaction]["lower_bound"] = -1
 
                 model_NN_gf = self.gapfill(self.all_reactions,
                                         self.draft_reaction_ids,
