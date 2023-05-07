@@ -3,3 +3,4 @@ __pycache__
 dist/
 compounds.tsv
 reactions.tsv
+bigg_reactions.tsv
