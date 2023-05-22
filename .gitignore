@@ -1,0 +1,6 @@
+__pycache__
+*.egg-info/
+dist/
+compounds.tsv
+reactions.tsv
+bigg_reactions.tsv
