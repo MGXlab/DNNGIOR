@@ -31,10 +31,10 @@ class NN:
                 self.def_path = os.path.join(cwd.parent, 'files', 'NN')
 
                 if self.modeltype == 'ModelSEED':
-                    self.path = os.path.join(self.def_path, 'NN_MS_lite.npz')
+                    self.path = os.path.join(self.def_path, 'NN_MS.npz')
                     print(self.path)
                 elif self.modeltype == 'CarveMe':
-                    self.path = os.path.join(self.def_path, 'NN_CM_lite.npz')
+                    self.path = os.path.join(self.def_path, 'NN_CM.npz')
                 else:
                     raise Exception('No path or recognised modeltype provided')
                 print('Loading default {} NN'.format(self.modeltype))
