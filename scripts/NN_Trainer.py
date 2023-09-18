@@ -6,7 +6,7 @@ Created on Mon 24 Jan 2022
 from tensorflow.python.keras.saving import hdf5_format
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Input
-from tensorflow.keras import optimizers
+from tensorflow.keras.optimizers.legacy import Adam
 from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import AUC, Precision, Recall
 
@@ -77,7 +77,8 @@ def generate_training_set(data,nuplo, min_con, max_con, min_for, max_for, del_p,
         PARAMETERS:
         ----------
         data: array,
-            DESCRIPTION
+            This is the data based on which a training dataset (features and labels) will be created.
+            Needs to be array of 0s and 1s corresponding to reaction sets of metabolic models
         nuplo: int
             create duplicates of input data
             default=30
@@ -89,9 +90,9 @@ def generate_training_set(data,nuplo, min_con, max_con, min_for, max_for, del_p,
         max_for, float
             maximum false ommision rate, default = 0.55
         min_con, float
-            minimum contanimation introduced, currently not used by me, default = 0
+            minimum contanimation introduced, currently not in use, default = 0
         max_con, float
-            maximum contamination introduced, currently not used by me, default = 0
+            maximum contamination introduced, currently not in use, default = 0
         del_p, list
             list of probabilities of deletion for reactions
         con_p, list
@@ -193,6 +194,7 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
         validation_split: float, optional
             Splits the input data in training and validation
             default = 0 (no split)
+            if used, the valdiation will not be used during training but instead to calculate scores after training
 
         SAVING PARAMETERS:
 
@@ -236,31 +238,37 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
     print('training on data with shape: {} with {} reactions'.format(train_data.shape, sum(train_data.flatten())))
 
     #Build sequential model, define architecture
-    model = Sequential()
-    model.add(Input((nreactions,)))
+    network = Sequential()
+    network.add(Input((nreactions,)))
     for _ in range(nlayers):
-        model.add(Dense(nnodes, activation='relu'))
-        model.add(Dropout(dropout))
-    model.add(Dense(nreactions, activation='sigmoid'))
+        network.add(Dense(nnodes, activation='relu'))
+        network.add(Dropout(dropout))
+    network.add(Dense(nreactions, activation='sigmoid'))
 
     #compile the network, determine parameters and loss function
-    model.compile(optimizers.Adam(learning_rate=0.005, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.01, amsgrad=True),
-                  loss=custom_weighted_loss(model.input, bias_0, maskI),
+    network.compile(Adam(learning_rate=0.005, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.01, amsgrad=True),
+                  loss=custom_weighted_loss(network.input, bias_0, maskI),
                   metrics=[AUC(),Precision(thresholds=0.5),Recall(thresholds=0.5)])
     #print summary of model
-    model.summary()
-
+    network.summary()
     #train model, history can be used to observe training
-    history = model.fit(train_data, labels, validation_split = validation_split, epochs = nepochs, shuffle=True, batch_size = b_size, verbose=1)
+    history = network.fit(train_data, labels, validation_split = validation_split, epochs = nepochs, shuffle=True, batch_size = b_size, verbose=1)
+    pseudo_network = []
+    for i in range(0, len(network.layers),2):
+        pseudo_network.append(network.layers[i].get_weights())
+    pseudo_network = np.asarray(pseudo_network, dtype=object)
     #save Network
     if(save):
-        model_path = os.path.join(output_path, "{}.h5".format(name))
-        with h5py.File(model_path, mode='w') as f:
-            model.save(f)
-            f.attrs['modeltype'] = modeltype
-            f.create_dataset("rxn_keys", data =[n.encode("ascii", "ignore") for n in rxn_keys])
-
-    trainedNN = NN_Predictor.NN(custom=[model,rxn_keys,modeltype])
+        if(save == 'h5'):
+            network_path = os.path.join(output_path, "{}.h5".format(name))
+            with h5py.File(model_path, mode='w') as f:
+                network.save(f)
+                f.attrs['modeltype'] = modeltype
+                f.create_dataset("rxn_keys", data =[n.encode("ascii", "ignore") for n in rxn_keys])
+        else:
+            network_path = os.path.join(output_path, "{}.npz".format(name))
+            np.savez(network_path,network=pseudo_network, modeltype=modeltype,rxn_keys=rxn_keys)
+    trainedNN = NN_Predictor.NN(custom=[pseudo_network,rxn_keys,modeltype])
     if return_history:
         return trainedNN, history
     else:
