@@ -4,8 +4,8 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 
 FILES_PATH       = os.path.join(BASE, "files")
 TRAINED_NN_PATH  = os.path.join(FILES_PATH, "NN")
-TRAINED_NN_MSEED = os.path.join(TRAINED_NN_PATH, "NN_MS.h5")
-TRAINED_NN_BIGG  = os.path.join(TRAINED_NN_PATH, "NN_BG.h5")
+TRAINED_NN_MSEED = os.path.join(TRAINED_NN_PATH, "NN_MS.npz")
+TRAINED_NN_BIGG  = os.path.join(TRAINED_NN_PATH, "NN_BG.npz")
 
 MODELS_PATH      = os.path.join(FILES_PATH, "models")
 
