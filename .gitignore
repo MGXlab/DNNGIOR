@@ -1,0 +1,7 @@
+__pycache__
+*.egg-info/
+.ipynb_checkpoints/
+dist/
+compounds.tsv
+reactions.tsv
+bigg_reactions.tsv

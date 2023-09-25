@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "dnngior"
+version = "0.0.3"
+description = "build high-quality genome-scale metabolic model by using a deep neural network to guide gapfilling"
+authors = ["Haris Zafeiropoulos <haris.zafeiropoulos@kuleuven.be>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+cobra = "<=0.23.0"
+tensorflow = "^2.12.0"
+gurobipy = "^10.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
