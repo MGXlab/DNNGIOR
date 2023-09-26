@@ -13,7 +13,7 @@ import ast
 
 class Reaction:
 
-    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType=None, fixed_bounds=None):
+    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType="ModelSEED", fixed_bounds=None):
         '''
         General class to handle reaction sets from metabolic models.
 
@@ -22,10 +22,6 @@ class Reaction:
         Parameters
         ----------
 
-<<<<<<< HEAD:dnngior/reaction_class.py
-=======
-
->>>>>>> main:scripts/reaction_class.py
         model_folder : str, optional
             Path to the folder with sbml format models from where to retrieve reactions.
             By default all files in the folder are considered models.
@@ -70,12 +66,6 @@ class Reaction:
         self.reactions = self.__get_reactions()
 
 
-<<<<<<< HEAD:dnngior/reaction_class.py
-=======
-
-
-
->>>>>>> main:scripts/reaction_class.py
     def __get_model(self, model):
 
         '''

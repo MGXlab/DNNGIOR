@@ -6,41 +6,20 @@ Created on Thu March 9 2023
 import numpy as np
 import pandas as pd
 import cobra.core.model as cobra_model
-from reaction_class import Reaction
+from dnngior.reaction_class import Reaction
 import os
 import sys
 from math import exp
 from pathlib import Path
 
 class NN:
-    def __init__(self,modeltype=None,path=None, custom=None):
+    def __init__(self, modeltype=None, path=None, custom=None):
         '''
         Light version of the model, saves space, uses only numpy and cobra and no tensorflow
         '''
-        if custom:
-            self.network = custom[0]
-            self.rxn_keys = custom[1]
-            self.modeltype = custom[2]
-        else:
-            self.path=path
-            self.modeltype=modeltype
-            if self.path is None:
-                #this will only work if ran from scripts, should be a package way right?
-                cwd = Path.cwd()
-                sys.path.append(cwd)
-                self.def_path = os.path.join(cwd.parent, 'files', 'NN')
 
-                if self.modeltype == 'ModelSEED':
-                    self.path = os.path.join(self.def_path, 'NN_MS.npz')
-                    print(self.path)
-                elif self.modeltype == 'CarveMe':
-                    self.path = os.path.join(self.def_path, 'NN_CM.npz')
-                else:
-                    raise Exception('No path or recognised modeltype provided')
-                print('Loading default {} NN'.format(self.modeltype))
-            else:
-                print('Loading network at user provided path')
-            self.__get_pseudo_network()
+        self.path=path
+        self.__get_pseudo_network()
 
 
             #Function that loads the Neural network; path is path to .h5 file
