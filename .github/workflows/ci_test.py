@@ -1,6 +1,11 @@
 import dnngior
-import gurobipy as gp
+
 import os
+
+
+"""
+
+import gurobipy as gp
 
 # Gurobipy WLS credentials; for how to get one check: 
 # https://support.gurobi.com/hc/en-us/articles/13232844297489-How-do-I-set-up-a-Web-License-Service-WLS-client-license
@@ -11,7 +16,6 @@ params["LICENSEID"] = 964844
 
 gp.Env(params = params)
 
-
 base_path = "/".join(os.path.abspath(__file__).split("/")[:-3])
 
 # BiGG case
@@ -21,7 +25,7 @@ print("gapfill using a BiGG model")
 draftModel = os.path.join(base_path, "docs/models/e_coli_core.xml")
 
 # Gapfill it
-gf_object = dnngior.Gapfill(draftModel, dbType="BiGG", objectiveName="BIOMASS_Ecoli_core_w_GAM")
+# gf_object = dnngior.Gapfill(draftModel, dbType="BiGG", objectiveName="BIOMASS_Ecoli_core_w_GAM")
 
 # ModelSEED case
 print("gapfill using a ModelSEED model")
@@ -30,4 +34,11 @@ print("gapfill using a ModelSEED model")
 draftModel = os.path.join(base_path, "docs/models/e_coli_core_Seed.sbml")
 
 # Gapfill it
-gf_object = dnngior.Gapfill(draftModel, objectiveName="bio1")
+# gf_object = dnngior.Gapfill(draftModel, objectiveName="bio1")
+"""
+
+print("This workflow only tests that dnngior can be installed properly and that's imported in Python 3.10\
+      The above workflow will be able to run only once a full Gurobi license is available.\
+      Until the, please, make sure you perform the tests/test.py check before making a PR without any errors.")
+
+

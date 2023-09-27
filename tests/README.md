@@ -1,3 +1,12 @@
+# Important! 
+
+In case you want to contribute, please make sure you first run the `test.py` script using your alterations. 
+
+If you get the following, then you are good to go with your PR. 
+
+Unfortunately, at this point, a full Gurobi Web License Service (WLS) is not available. 
+
+
 Using bh_ungapafilled and the complete medium, **17 reactions** are added:
 
 rxn03167_c0 *
