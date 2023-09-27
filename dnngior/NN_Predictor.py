@@ -46,7 +46,7 @@ class NN:
         Exception:
         if input shape does not match with the input of the network
         """
-    #Check if model -> get list of ids and convert
+        #Check if model -> get list of ids and convert
         if isinstance(input, cobra_model.Model):
             input2 = self.__convert_reaction_list(input.reactions.list_attr('id'))
         elif isinstance(input, Reaction):
@@ -94,19 +94,25 @@ class NN:
         Input = the set of reactions that needs to be converted
         """
         try:
+
             b_input = []
+
             #I think that at this point this might be the only reason I would need modeltype, there are few things I am as annoyed with as the _c0
-            if(self.modeltype=='ModelSEED'):
+            if self.modeltype =='ModelSEED':
                 reaction_list = [reaction[:8]+'_c0' if 'rxn' in reaction else reaction for reaction in reaction_set]
                 self.rxn_keys  = [key[:8]+'_c0' if 'rxn' in key else key for key in self.rxn_keys ]
-            else:
+            elif self.modeltype == "BiGG":
                 reaction_list = list(reaction_set)
+                print(reaction_list[0])
+
             for i in self.rxn_keys:
                 if i in reaction_list:
                     b_input.append(1)
                 else:
                     b_input.append(0)
+
             print("#reactions not found in keys: ", len(set(reaction_set)) - sum(b_input), '/', len(reaction_set))
+
         except:
             raise Exception("Conversion failed")
 

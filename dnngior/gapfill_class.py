@@ -29,7 +29,7 @@ class Gapfill:
         self.trainedNNPath    = trainedNNPath
         self.dbType           = dbType
         self.draftModel       = cobra.io.read_sbml_model(draftModel)
-        self.draft_reaction   = Reaction( model = draftModel )
+        self.draft_reaction   = Reaction( model = draftModel, dbType = dbType )
         self.medium           = medium
         self.result_selection = "min_reactions"
 
@@ -37,21 +37,22 @@ class Gapfill:
             self.path_to_biochem  = MODELSEED_REACTIONS
             if trainedNNPath is None: 
                 self.trainedNNPath = TRAINED_NN_MSEED
+
         elif dbType == "BiGG":
+            self.path_to_biochem  = BIGG_REACTIONS
             if trainedNNPath is None:
                 self.trainedNNPath = TRAINED_NN_BIGG
-            return "dbType %s is currently not supported" % dbType
         else:
             return "dbType %s is not supported" % dbType
 
         # Build a Reaction object for the exchange reactions; 
         # if you have a defined medium, set the fixed_bounds argument accordingly
-        self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), fixed_bounds = self.medium)
-        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem)
+        self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), dbType = self.dbType, fixed_bounds = self.medium)
+        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem, dbType = self.dbType)
         self.db_reactions.reactions = self.db_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
 
         # Merge reactions from db with those of the draft model
-        self.all_reactions           = Reaction(fixed_bounds = self.medium) 
+        self.all_reactions           = Reaction(fixed_bounds = self.medium, dbType = self.dbType) 
         self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.db_reactions.reactions)
 
         self.draft_reaction_ids = set(self.draft_reaction.reactions)
@@ -74,7 +75,7 @@ class Gapfill:
         if self.trainedNNPath is not None:
             
             # Predict weights
-            p = NN(path = self.trainedNNPath).predict( self.draft_reaction_ids ) 
+            p = NN(path = self.trainedNNPath ).predict( self.draft_reaction_ids ) 
             for i in p:
                 self.weights[i]  = np.round(1-p[i], 10)
 
@@ -220,6 +221,7 @@ class Gapfill:
             m.addLConstr(gu.LinExpr(coef, var), 'E', 0, i)
 
         m.update()
+ 
         # Keep gurobi silent
         m.setParam('OutputFlag', False) 
         m.optimize()
@@ -395,7 +397,7 @@ class Gapfill:
         draft_reaction_ids_split = set()
         
         for reaction in all_reactions_split.reactions:
-            print(">> reaction: ", reaction)
+
             forward_version = reaction.replace('_rv', '')
             
             if forward_version in draft_reaction_ids:
@@ -450,7 +452,7 @@ class Gapfill:
         Input:
             all_reactions_split is Reaction class object containing data for all reactions.
             
-            N is reactions in draft model.
+            N is a reactions set (see line 396)
             
             M is dictionary of all candidate reactions mapping to their cost.
             
@@ -465,55 +467,68 @@ class Gapfill:
         R_flux = [] #reaction fluxes
         R_cost = [] #reaction costs
         D      = [] #deltas
-        proposed_model = []
         
         alpha = 0
         beta  = 2 * len(M)
         
         x = [i for i in M if i not in N]
         
+
         # Format reactions for gurobi model
         reaction_dict = all_reactions_split.get_gurobi_reaction_dict(all_reactions_split.reactions.keys())
-        
+
         # Format metabolites for gurobi_model
         metabolite_dict = all_reactions_split.get_gurobi_metabolite_dict(all_reactions_split.reactions.keys())
-        
+
         # Check if the model is gapfillable :)
         gu_model = self.build_gurobi_model(reaction_dict, metabolite_dict, B, N, M, delta = 1)
-        
-        
+
+        for var in gu_model.getVars():
+            try:
+                var.X
+            except:
+                print("Var ", var.VarName, " has no sulution value (X)")
+
+
         R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
     
         max_obj = gu_model.getVarByName(B).X
         print ('Flux through biomass reaction is {:.8f}'.format(max_obj))
 
-        #there is no solution for the model,
-        #probably the medium is too restrictive
-        if np.round(gu_model.getVarByName(B).X,6) ==0:
-            
+        # In case there is no solution for the model, probably the medium is too restrictive
+        if np.round(gu_model.getVarByName(B).X,6) ==0:            
             return None
         
         print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
         
-        
         while abs(alpha - beta) > 1:
-            
-            sizeR = len(R[-1])
                         
             delta = int((alpha + beta) / 2.0)
             
             gu_model = self.build_gurobi_model(reaction_dict, metabolite_dict, B, N, M, delta)
             
             if np.round(gu_model.getVarByName(B).X,6) > 0:
-                # print ('Flux through biomass reaction is {:.8f}'.format(gu_model.getVarByName(B).X))
                 
                 R.append([var.VarName for var in gu_model.getVars() if (var.VarName not in N) and (var.X != 0)])
                 
                 # Reaction fluxes
-                R_flux.append([gu_model.getVarByName(e).X for e in M if np.round(gu_model.getVarByName(e).X,6) > 0])
+                fluxes_with_no_solution_value = []
+                for e in M:
+                    try:
+                        gu_model.getVarByName(e).X
+                    except:
+                        fluxes_with_no_solution_value.append(e)
+
+                M_flux = M.copy()
+                for i in fluxes_with_no_solution_value:
+                    M_flux.pop(i)
+
+
+
+                R_flux.append([gu_model.getVarByName(e).X for e in M_flux if np.round(gu_model.getVarByName(e).X,6) > 0])
                 
                 # Costs of candidate reactions retained in the model
-                R_cost.append([M[e] for e in M if gu_model.getVarByName(e).X > 0])
+                R_cost.append([M_flux[e] for e in M_flux if gu_model.getVarByName(e).X > 0])
                 
                 # Delta
                 D.append(delta)
