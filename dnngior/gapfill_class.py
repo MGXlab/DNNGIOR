@@ -29,7 +29,7 @@ class Gapfill:
         self.trainedNNPath    = trainedNNPath
         self.dbType           = dbType
         self.draftModel       = cobra.io.read_sbml_model(draftModel)
-        self.draft_reaction   = Reaction( model = draftModel )
+        self.draft_reaction   = Reaction( model = draftModel, dbType = dbType )
         self.medium           = medium
         self.result_selection = "min_reactions"
 
@@ -37,21 +37,22 @@ class Gapfill:
             self.path_to_biochem  = MODELSEED_REACTIONS
             if trainedNNPath is None: 
                 self.trainedNNPath = TRAINED_NN_MSEED
+
         elif dbType == "BiGG":
+            self.path_to_biochem  = BIGG_REACTIONS
             if trainedNNPath is None:
                 self.trainedNNPath = TRAINED_NN_BIGG
-            return "dbType %s is currently not supported" % dbType
         else:
             return "dbType %s is not supported" % dbType
 
         # Build a Reaction object for the exchange reactions; 
         # if you have a defined medium, set the fixed_bounds argument accordingly
-        self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), fixed_bounds = self.medium)
-        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem)
+        self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), dbType = self.dbType, fixed_bounds = self.medium)
+        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem, dbType = self.dbType)
         self.db_reactions.reactions = self.db_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
 
         # Merge reactions from db with those of the draft model
-        self.all_reactions           = Reaction(fixed_bounds = self.medium) 
+        self.all_reactions           = Reaction(fixed_bounds = self.medium, dbType = self.dbType) 
         self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.db_reactions.reactions)
 
         self.draft_reaction_ids = set(self.draft_reaction.reactions)
@@ -74,7 +75,7 @@ class Gapfill:
         if self.trainedNNPath is not None:
             
             # Predict weights
-            p = NN(path = self.trainedNNPath).predict( self.draft_reaction_ids ) 
+            p = NN(path = self.trainedNNPath ).predict( self.draft_reaction_ids ) 
             for i in p:
                 self.weights[i]  = np.round(1-p[i], 10)
 
@@ -395,7 +396,7 @@ class Gapfill:
         draft_reaction_ids_split = set()
         
         for reaction in all_reactions_split.reactions:
-            print(">> reaction: ", reaction)
+
             forward_version = reaction.replace('_rv', '')
             
             if forward_version in draft_reaction_ids:
