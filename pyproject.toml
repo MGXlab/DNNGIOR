@@ -6,7 +6,7 @@ authors = ["Haris Zafeiropoulos <haris.zafeiropoulos@kuleuven.be>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.10.12"
+python = "^3.10"
 cobra = "<=0.23.0"
 gurobipy = "^10.0.3"
 
