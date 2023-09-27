@@ -35,4 +35,3 @@ from dnngior.gapfill_class import Gapfill
 from dnngior.build_model import refine_model
 
 from dnngior.NN_Predictor import NN
-from dnngior.NN_Trainer import noise_data, generate_training_set, custom_weighted_loss, train
