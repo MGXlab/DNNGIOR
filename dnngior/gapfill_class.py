@@ -358,15 +358,14 @@ class Gapfill:
         draft_reaction_ids_split = set()
 
         for reaction in all_reactions_split.reactions:
-            print(">> reaction: ", reaction)
-            forward_version = reaction.replace('_rv', '')
+            forward_version = reaction.replace('_r', '')
 
             if forward_version in self.draft_reaction_ids:
                 draft_reaction_ids_split.add(reaction)
 
             # If forward version of a reverse reaction is in candidate_reactions.
             else:
-                if '_rv' in reaction:
+                if '_r' in reaction:
                     # Give reverse reaction same cost as forward version.
                     cand_reacs[reaction] = cand_reacs[forward_version]
 
@@ -385,7 +384,7 @@ class Gapfill:
             return None
 
 
-        gapfill_result = set([r.replace('_rv', '') for r in split_gapfill_result])
+        gapfill_result = set([r.replace('_r', '') for r in split_gapfill_result])
 
         self.added_reactions = list(gapfill_result) #All reactions that are added to the model during gapfilling.
 
