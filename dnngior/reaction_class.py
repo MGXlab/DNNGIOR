@@ -323,7 +323,7 @@ class Reaction:
             r1, r2 = self.split_bidirectional_reaction(reaction_dictionary[reaction])
             _d[reaction] = r1
             if r2:
-                r2_name = reaction + '_rv'
+                r2_name = reaction + '_r'
                 _d[r2_name] = r2
 
         return _d
