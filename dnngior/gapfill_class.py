@@ -79,6 +79,14 @@ class Gapfill:
             p = self.NN.predict( self.draft_reaction_ids )
             for i in p:
                 self.weights[i]  = np.round(1-p[i], 10)
+        #TEMP FIX for predictions for non db reactions:
+        ip = []
+        for i in self.weights:
+            if i not in self.all_reactions.reactions.keys():
+                ip.append(i)
+                print("WARNING: predicted {} not in database, removing from candidates".format(i))
+        for i in ip:
+            del self.weights[i]
 
         if gapfill:
             self.gapfill()
@@ -338,6 +346,7 @@ class Gapfill:
         all_reacs_obj = Reaction()
         all_reacs_obj.reactions = all_reacs.copy()
         cand_reacs = self.weights.copy()
+        self.result_selection = result_selection
 
         # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
         for reaction in all_reacs_obj.reactions:
@@ -348,6 +357,7 @@ class Gapfill:
         for reaction in self.weights:
             if reaction in self.draft_reaction_ids:
                 del cand_reacs[reaction]
+
 
         # Split bidirectional reactions into a forward and reverse reaction.
         all_reactions_split = Reaction()
@@ -407,6 +417,7 @@ class Gapfill:
         else:
             self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel)
 
+        print('Gapfilling added {} reactions'.format(len(self.added_reactions)))
         return self.gapfilledModel
 
     def binarySearch(self,
