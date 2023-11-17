@@ -50,11 +50,11 @@ class Gapfill:
         # if you have a defined medium, set the fixed_bounds argument accordingly
         self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), fixed_bounds = self.medium)
         self.db_reactions           = Reaction(biochem_input = self.path_to_biochem)
-        self.db_reactions.reactions = self.db_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
 
         # Merge reactions from db with those of the draft model
         self.all_reactions           = Reaction(fixed_bounds = self.medium)
-        self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.db_reactions.reactions)
+        self.all_reactions.reactions = self.all_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
+        self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.all_reactions.reactions)
 
         self.draft_reaction_ids = set(self.draft_reaction.reactions)
 
