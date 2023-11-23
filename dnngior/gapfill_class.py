@@ -36,20 +36,21 @@ class Gapfill:
         print("test")
 
         if dbType == "ModelSEED":
-            self.path_to_biochem  = MODELSEED_REACTIONS
+            self.path_to_biochem   = MODELSEED_REACTIONS
+            self.path_to_exchanges = MODELSEED_EXCHANGES
             if trainedNNPath is None:
                 self.trainedNNPath = TRAINED_NN_MSEED
         elif dbType == "BiGG":
+            self.path_to_biochem = BIGG_REACTIONS
             if trainedNNPath is None:
                 self.trainedNNPath = TRAINED_NN_BIGG
-            return "dbType %s is currently not supported" % dbType
         else:
             return "dbType %s is not supported" % dbType
 
         # Build a Reaction object for the exchange reactions;
         # if you have a defined medium, set the fixed_bounds argument accordingly
-        self.exchange_reacs         = Reaction(model = os.path.join(MODELS_PATH, 'exchangeReactions.sbml'), fixed_bounds = self.medium)
-        self.db_reactions           = Reaction(biochem_input = self.path_to_biochem)
+        self.exchange_reacs =   Reaction(model = self.path_to_exchanges, fixed_bounds = self.medium)
+        self.db_reactions   =   Reaction(biochem_input = self.path_to_biochem)
 
         # Merge reactions from db with those of the draft model
         self.all_reactions           = Reaction(fixed_bounds = self.medium)
@@ -84,7 +85,7 @@ class Gapfill:
         for i in self.weights:
             if i not in self.all_reactions.reactions.keys():
                 ip.append(i)
-                print("WARNING: predicted {} not in database, removing from candidates".format(i))
+                print("WARNING: reaction {} in candidates but not in database, removing from candidates".format(i))
         for i in ip:
             del self.weights[i]
 
@@ -368,14 +369,14 @@ class Gapfill:
         draft_reaction_ids_split = set()
 
         for reaction in all_reactions_split.reactions:
-            forward_version = reaction.replace('_r', '')
+            forward_version = reaction.replace('_rv', '')
 
             if forward_version in self.draft_reaction_ids:
                 draft_reaction_ids_split.add(reaction)
 
             # If forward version of a reverse reaction is in candidate_reactions.
             else:
-                if '_r' in reaction:
+                if '_rv' in reaction:
                     # Give reverse reaction same cost as forward version.
                     cand_reacs[reaction] = cand_reacs[forward_version]
 
@@ -394,7 +395,7 @@ class Gapfill:
             return None
 
 
-        gapfill_result = set([r.replace('_r', '') for r in split_gapfill_result])
+        gapfill_result = set([r.replace('_rv', '') for r in split_gapfill_result])
 
         self.added_reactions = list(gapfill_result) #All reactions that are added to the model during gapfilling.
 
