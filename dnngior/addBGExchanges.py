@@ -20,7 +20,6 @@ compounds['name'].fillna('NoName', inplace=True)
 addedMets = []
 for met in compounds.index:
     if "_e" in met:
-        print(met)
         if met not in addedMets:
             met_name = compounds['name'][met].replace(' ','_')
             exchange = cobra.Reaction("EX_" + met)
@@ -30,5 +29,5 @@ for met in compounds.index:
             blank_model.add_boundary(blank_model.metabolites.get_by_id(m.id), type="exchange")
             addedMets.append(met)
 
-model_path = os.path.join(path, 'files',  'models', 'BG_exchanges.sbml')
+model_path = os.path.join(MODELS_PATH, 'BG_exchanges.sbml')
 cobra.io.write_sbml_model(blank_model, filename=model_path)
