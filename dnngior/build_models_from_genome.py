@@ -5,19 +5,8 @@ __version__ = '0.1'
 __date__ = '15 Jan, 2024'
 
 import argparse
-import copy
-import gzip
 import os
 import sys
-
-from dnngior import Gapfill, NN_Predictor
-from dnngior.reaction_class import Reaction
-from modelseedpy import MSBuilder, MSGenome
-from modelseedpy.core import msmedia
-from modelseedpy.core.rast_client import RastClient
-from cobra.io import write_sbml_model
-
-
 
 def parse_arguments():
     class PathAction(argparse.Action):
@@ -31,9 +20,9 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(
             prog='build_models_from_genome.py',
-            description=('Write description'),
-            usage=('./build_model_from_genome.py (-f FILE | -d DIR) -o output_folder '
-                '[options] [-h / --help]'),
+            description=('Command line script to build models from a folder with faa files (-f DIR) or '
+            'a folder with ungapfilled base models (-m DIR)'),
+            usage=('python build_model_from_genome.py (-f [DIR] | -d [DIR]) -o output_folder '),
             add_help=False
             )
 
@@ -73,7 +62,7 @@ def parse_arguments():
             required=True,
             type=str,
             action=PathAction,
-            help=('[FILE] Path to output folder.')
+            help=('[DIR] Path to output folder.')
             )
 
     optional = parser.add_argument_group('Optional arguments')
@@ -97,6 +86,14 @@ def parse_arguments():
             '\n'.join(extra_args)))
 
     return args
+
+def lazy_loading_modules():
+    from dnngior import Gapfill, NN_Predictor
+    from dnngior.reaction_class import Reaction
+    from modelseedpy import MSBuilder, MSGenome
+    from modelseedpy.core import msmedia
+    from modelseedpy.core.rast_client import RastClient
+    from cobra.io import write_sbml_model
 
 def build_base_model(path_to_fasta):
     # Set the path to your genome
@@ -159,6 +156,7 @@ def create_output_folder(args):
 
 def main():
     args = parse_arguments()
+    lazy_loading_modules()
     create_output_folder(args)
 
     if args.faa_folder:
