@@ -13,7 +13,7 @@ import ast
 
 class Reaction:
 
-    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType="ModelSEED", fixed_bounds=None):
+    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType=None, fixed_bounds=None):
         '''
         General class to handle reaction sets from metabolic models.
 
@@ -123,15 +123,13 @@ class Reaction:
 
 
                 #boundaries set to 1 and -1 make gapfilling cleaner,
-
                 #the external media should also be in this range.
 
-                if direction == '=':
+                #if unknown assume biodirectional
+                if direction == '=' or direction == '?':
                     reactions[reaction_id] = {'lower_bound':-1.0, 'upper_bound':1.0}
-
                 else:
                     reactions[reaction_id] = {'lower_bound':0.0, 'upper_bound':1.0}
-
 
                 mets={}
 
@@ -340,7 +338,7 @@ class Reaction:
             for line in f:
                 splitted_line = line.strip().split("\t")
                 if(self.dbType=='ModelSEED'):
-                    biochem[splitted_line[0]] = [splitted_line[4], splitted_line[9], splitted_line[6]]
+                    biochem[splitted_line[0]] = [splitted_line[4], splitted_line[8], splitted_line[6]]
                 else:
                     biochem[splitted_line[0]] = splitted_line[2]
         return biochem
