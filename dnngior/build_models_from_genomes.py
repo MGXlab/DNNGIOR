@@ -7,6 +7,7 @@ __date__ = '15 Jan, 2024'
 import argparse
 import os
 import sys
+from importlib import import_module
 
 def parse_arguments():
     class PathAction(argparse.Action):
@@ -87,15 +88,10 @@ def parse_arguments():
 
     return args
 
-def lazy_loading_modules():
-    from dnngior import Gapfill, NN_Predictor
-    from dnngior.reaction_class import Reaction
+def build_base_model(path_to_fasta):
     from modelseedpy import MSBuilder, MSGenome
     from modelseedpy.core import msmedia
     from modelseedpy.core.rast_client import RastClient
-    from cobra.io import write_sbml_model
-
-def build_base_model(path_to_fasta):
     # Set the path to your genome
     print("Build MSGenome object")
     patric_genome = MSGenome.from_fasta(path_to_fasta, split = ' ')
@@ -117,7 +113,8 @@ def build_base_model(path_to_fasta):
     return base_model
 
 def build_gapfilled_model_from_fasta(path_to_fasta, args):
-    model_name = os.path.basename(path_to_fasta)[:-4]
+    from cobra.io import write_sbml_model
+    model_name = os.path.basename(path_to_fasta)
     ug_model = build_base_model(path_to_fasta)
     print('#reactions: {}'.format(len(ug_model.reactions.list_attr('id'))))
     ug_location = os.path.join(args.output_folder,'base_models','base_{}'.format(model_name))
@@ -125,12 +122,13 @@ def build_gapfilled_model_from_fasta(path_to_fasta, args):
     gapfill_model_wrapper(ug_location, args)
 
 def gapfill_model_wrapper(ug_location, args):
+    from cobra.io import write_sbml_model
+    from dnngior.gapfill_class import Gapfill
+    from dnngior.reaction_class import Reaction
     gf_model = Gapfill(ug_location).gapfilledModel
     ug_model_name = os.path.basename(ug_location)
     if ug_model_name.startswith('base_'):
         model_name = ug_model_name[5:]
-    elif ug_model_name.startswith('ug_'):
-        model_name = ug_model_name[3:]
     else:
         model_name = ug_model_name
     gf_location = os.path.join(args.output_folder,'gapfilled_models','gf_{}'.format(model_name))
@@ -156,7 +154,6 @@ def create_output_folder(args):
 
 def main():
     args = parse_arguments()
-    lazy_loading_modules()
     create_output_folder(args)
 
     if args.fasta_folder:
