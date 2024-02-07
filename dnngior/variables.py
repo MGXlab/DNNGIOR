@@ -9,7 +9,6 @@ TRAINED_NN_BIGG  = os.path.join(TRAINED_NN_PATH, "NN_BG.npz")
 
 MODELS_PATH      = os.path.join(FILES_PATH, "models")
 
-
 BIOCHEMISTRY_PATH   = os.path.join(FILES_PATH, "biochemistry")
 MODELSEED_REACTIONS = os.path.join(BIOCHEMISTRY_PATH, "reactions.tsv")
 MODELSEED_COMPOUNDS = os.path.join(BIOCHEMISTRY_PATH, "compounds.tsv")
