@@ -20,7 +20,7 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(
             prog='build_models_from_genome.py',
-            description=('Command line script to build models from a folder with faa files (-f DIR) or '
+            description=('Command line script to build models from a folder with fasta files (-f DIR) or '
             'a folder with ungapfilled base models (-m DIR)'),
             usage=('python build_model_from_genome.py (-f [DIR] | -d [DIR]) -o output_folder '),
             add_help=False
@@ -31,13 +31,13 @@ def parse_arguments():
     group.add_argument(
             '-f',
             '--fasta_files',
-            dest='faa_folder',
+            dest='fasta_folder',
             metavar='',
             type=str,
             action=PathAction,
             help=(
                 '[DIR] '
-                'folder containing the faa files you want to build models for'
+                'folder containing the fasta files you want to build models for'
                 )
             )
     group.add_argument(
@@ -138,7 +138,7 @@ def gapfill_model_wrapper(ug_location, args):
 
 def create_output_folder(args):
     if os.path.exists(os.path.dirname(args.output_folder)):
-        if args.faa_folder:
+        if args.fasta_folder:
             base_model_folder = os.path.join(args.output_folder, 'base_models')
             if not os.path.exists(base_model_folder):
                 os.makedirs(base_model_folder, exist_ok=True)
@@ -159,14 +159,14 @@ def main():
     lazy_loading_modules()
     create_output_folder(args)
 
-    if args.faa_folder:
-        list_of_genomes = [i for i in os.listdir(args.faa_folder) if i.endswith('.faa')]
+    if args.fasta_folder:
+        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith('.faa')]
         if len(list_of_genomes) == 0:
-            sys.exit('# ERROR: no faa files found in {}'.format(args.faa_folder))
+            sys.exit('# ERROR: no fasta files found in {}'.format(args.fasta_folder))
         print('# Building and gapfilling {} models'.format(len(list_of_genomes)))
         for genome in list_of_genomes:
             print('# Building and gapfilling: {}'.format(genome))
-            build_gapfilled_model_from_faa(os.path.join(args.faa_folder, genome), args)
+            build_gapfilled_model_from_fasta(os.path.join(args.fasta_folder, genome), args)
         print('# Done')
 
     elif args.model_folder:
