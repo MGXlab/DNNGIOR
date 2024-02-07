@@ -25,7 +25,7 @@ reactions_aliases_dict = reactions_helper.loadMSAliases()
 reactions_helper.saveAliases(reactions_aliases_dict)
 
 
-def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None):
+def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None, dbType='ModelSEED'):
     '''
     refine a model from the gapfiller
 
@@ -46,74 +46,74 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None)
         a model that is ready to use
 
     '''
-    
+
     mc = gpfilledModel.copy()
     if unscalled is None:
         unscalled=[]
-    
-    for metab in mc.metabolites:
+    if dbType=='ModelSEED':
+        for metab in mc.metabolites:
 
-        metabName = metab.id.split('_')[0]
-        metabSufix = metab.id.split('_')[1]
-        
-        if metabName in compounds_dict:
-        
-            # 1) Add metabolite info
-            
-            if metabName in compounds_aliases_dict:
-                metab.annotation = compounds_aliases_dict[metabName].copy()
+            metabName = metab.id.split('_')[0]
+            metabSufix = metab.id.split('_')[1]
+
+            if metabName in compounds_dict:
+
+                # 1) Add metabolite info
+
+                if metabName in compounds_aliases_dict:
+                    metab.annotation = compounds_aliases_dict[metabName].copy()
+                else:
+                    metab.annotation = {}
+
+                metab.charge = compounds_dict[metabName]['charge']
+
+                metab.compartment = metabSufix
+
+                if compounds_dict[metabName]['formula'] is None:
+                    compounds_dict[metabName]['formula']= ''
+
+                metab.elements = compounds_helper.parseFormula(compounds_dict[metabName]['formula'])
+
+                metab.formula = compounds_helper.buildFormula(compounds_helper.parseFormula(compounds_dict[metabName]['formula']))
+
+                metab.name =  compounds_dict[metabName]['name'] + '_' + metabSufix
             else:
+                #not in the modelSEED database (are specific to GapSeq)
                 metab.annotation = {}
-                
-            metab.charge = compounds_dict[metabName]['charge']
-            
-            metab.compartment = metabSufix
-           
-            if compounds_dict[metabName]['formula'] is None:
-                compounds_dict[metabName]['formula']= ''
-            
-            metab.elements = compounds_helper.parseFormula(compounds_dict[metabName]['formula'])
-            
-            metab.formula = compounds_helper.buildFormula(compounds_helper.parseFormula(compounds_dict[metabName]['formula']))
-            
-            metab.name =  compounds_dict[metabName]['name'] + '_' + metabSufix
-        else:
-            #not in the modelSEED database (are specific to GapSeq)
-            metab.annotation = {}
-            metab.charge = None
-            metab.compartment = metabSufix
-            #metab.elements = ''
-            metab.formula = ''
-            metab.name = metab.id
-    
-    for reac in mc.reactions:
-        reacName = reac.id.split('_')[0]
-        #reacSufix = reac.id.split('_')[1]
-        
-        if reacName in reactions_dict:
-            
-            if reacName in reactions_aliases_dict:
-                reac.annotation = reactions_aliases_dict[reacName]
-                
-            else:
+                metab.charge = None
+                metab.compartment = metabSufix
+                #metab.elements = ''
+                metab.formula = ''
+                metab.name = metab.id
+
+        for reac in mc.reactions:
+            reacName = reac.id.split('_')[0]
+            #reacSufix = reac.id.split('_')[1]
+
+            if reacName in reactions_dict:
+
+                if reacName in reactions_aliases_dict:
+                    reac.annotation = reactions_aliases_dict[reacName]
+
+                else:
+                    reac.annotation = {}
+
+                reac.name = reactions_dict[reacName]['name']
+
+            else:#not in modelSEED
                 reac.annotation = {}
-        
-            reac.name = reactions_dict[reacName]['name']
-        
-        else:#not in modelSEED
-            reac.annotation = {}
-            reac.name = reac.id
-    
+                reac.name = reac.id
+
     #Add genes from a draft model
     if draftModel is not None:
         for reaction in draftModel.reactions:
             # So not to fail because we have removed the exchange reactions
             if mc.reactions.has_id(reaction.id):
                 mc.reactions.get_by_id(reaction.id).gene_reaction_rule = reaction.gene_reaction_rule
-                    
-    #change internal fluxes to +/- 1000            
+
+    #change internal fluxes to +/- 1000
     for reaction in mc.reactions:
-        
+
         if reaction.id not in unscalled:
             reaction.upper_bound *= scale
             reaction.lower_bound *= scale
