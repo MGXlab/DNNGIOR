@@ -10,6 +10,7 @@ import numpy as np
 import os
 import ast
 
+print('test reaction class loaded')
 
 class Reaction:
 
@@ -147,6 +148,9 @@ class Reaction:
                             elif int(loc) == 1:
                                 name = cpd + '_e0'
 
+                            elif int(loc) == 2:
+                                name = cpd + '_p0'
+
                             else: #if the loc of the metabolite is not specified, define it as cellular
                                 name = cpd + '_c0'
 
@@ -158,23 +162,8 @@ class Reaction:
                 reactions[reaction_id]['metabolites'] = {i:mets[i] for i in mets}
             else:
                 reactions[reaction] = {'lower_bound':-1.0, 'upper_bound':1.0}
-                reaction_split = react_d[reaction].split(' ')
-                mets = {}
-                side = 1
-                for i in reaction_split:
-                    if(len(i) > 1):
-                        stoc = 1.0
-                        if not('_' in i):
-                            if i[0].isdigit():
-                                stoc = float(i) * side
-                            else:
-                                if i == '<->':
-                                    side = -1
-                        else:
-                            mets[i] = stoc
+                reactions[reaction]['metabolites'] = eval(react_d[reaction][0])
 
-                reactions[reaction]['metabolites'] = {i:mets[i] for i in mets}
-                metabolites = react_d[reaction][0].split(';')
 
         return reactions
 
@@ -321,7 +310,7 @@ class Reaction:
             r1, r2 = self.split_bidirectional_reaction(reaction_dictionary[reaction])
             _d[reaction] = r1
             if r2:
-                r2_name = reaction + '_r'
+                r2_name = reaction + '_rv'
                 _d[r2_name] = r2
 
         return _d
@@ -340,5 +329,5 @@ class Reaction:
                 if(self.dbType=='ModelSEED'):
                     biochem[splitted_line[0]] = [splitted_line[4], splitted_line[8], splitted_line[6]]
                 else:
-                    biochem[splitted_line[0]] = splitted_line[2]
+                    biochem[splitted_line[0]] = [splitted_line[2], splitted_line[3]]
         return biochem
