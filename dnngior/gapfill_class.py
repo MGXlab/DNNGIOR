@@ -19,21 +19,28 @@ from dnngior import build_model
 
 class Gapfill:
     def __init__(self,
-                draftModel,
-                trainedNNPath = None,
-                medium        = None,
-                objectiveName = 'bio1',
-                dbType        = 'ModelSEED',
-                gapfill       = True):
+                draftModel,                     #Model to be gap-filled, required
+                trainedNNPath = None,           #Path to Neural network, if None is provided will default to dbType
+                medium        = None,           #User defined medium
+                black_list    = None,           #reactions to remove from candidates
+                grey_list     = None,           #reactions to punish with high cost
+                punish_cost   = 1000.0,         #high cost to punish with
+                default_cost  = 1.0,            #default_cost of non-predicted_reactions
+                objectiveName = 'bio1',         #Name of objective function
+                dbType        = 'ModelSEED',    #Type of database for reactions
+                gapfill       = True):          #Boolean of whether to auto-continue gapfilling
 
         self.objectiveName    = objectiveName
         self.trainedNNPath    = trainedNNPath
         self.dbType           = dbType
         self.draftModel       = cobra.io.read_sbml_model(draftModel)
         self.draft_reaction   = Reaction( model = draftModel )
+        self.black_list       = black_list
+        self.grey_list        = grey_list
         self.medium           = medium
+        self.default_cost     = default_cost
 
-        print("test")
+        print("test", self.dbType)
 
         if dbType == "ModelSEED":
             self.path_to_biochem   = MODELSEED_REACTIONS
@@ -42,22 +49,26 @@ class Gapfill:
                 self.trainedNNPath = TRAINED_NN_MSEED
         elif dbType == "BiGG":
             self.path_to_biochem = BIGG_REACTIONS
+            self.path_to_exchanges = BIGG_EXCHANGES
             if trainedNNPath is None:
                 self.trainedNNPath = TRAINED_NN_BIGG
         else:
             return "dbType %s is not supported" % dbType
 
+        self.draft_reaction_ids = set(self.draft_reaction.reactions)
+        if not self.objectiveName in self.draft_reaction_ids:
+            raise Exception("Objective not found in draftModel: {}".format(self.objectiveName))
+
         # Build a Reaction object for the exchange reactions;
         # if you have a defined medium, set the fixed_bounds argument accordingly
         self.exchange_reacs =   Reaction(model = self.path_to_exchanges, fixed_bounds = self.medium)
-        self.db_reactions   =   Reaction(biochem_input = self.path_to_biochem)
+        self.db_reactions   =   Reaction(biochem_input = self.path_to_biochem, dbType=self.dbType)
 
         # Merge reactions from db with those of the draft model
-        self.all_reactions           = Reaction(fixed_bounds = self.medium)
+        self.all_reactions           = Reaction(fixed_bounds = self.medium, dbType=self.dbType)
         self.all_reactions.reactions = self.all_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
         self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.all_reactions.reactions)
 
-        self.draft_reaction_ids = set(self.draft_reaction.reactions)
 
         if self.medium is not None:
             #####remove the predefined exchange reactions#####
@@ -73,14 +84,36 @@ class Gapfill:
                     self.all_reactions.reactions[react]["lower_bound"] = 0
             ####################################################
 
+
         self.weights = {}
         if self.trainedNNPath is not None:
             # Predict weights
             self.NN = NN(path = self.trainedNNPath)
-            p = self.NN.predict( self.draft_reaction_ids )
-            for i in p:
-                self.weights[i]  = np.round(1-p[i], 10)
-        #TEMP FIX for predictions for non db reactions:
+            self.predicted_reactions = self.NN.predict( self.draft_reaction_ids )
+            for p_reaction in self.predicted_reactions:
+                self.weights[p_reaction]  = np.round(1-self.predicted_reactions[p_reaction], 10)
+
+
+        # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
+        for reaction in self.all_reactions.reactions:
+            if (reaction not in self.draft_reaction_ids) and (reaction not in self.weights):
+                self.weights[reaction] = default_cost
+
+        if self.black_list is not None:
+            self.remove_candidates(self.black_list)
+
+        if self.grey_list is not None:
+            self.punish_candidates(self.grey_list)
+
+        # Delete reaction from candidate_reactions if it is present in the starting model.
+        rem_draf = []
+        for reaction in self.weights:
+            if reaction in self.draft_reaction_ids:
+                rem_draf.append(reaction)
+        for reaction in rem_draf:
+            del self.weights[reaction]
+
+        #TEMP FIX for candidates not in db:
         ip = []
         for i in self.weights:
             if i not in self.all_reactions.reactions.keys():
@@ -120,7 +153,7 @@ class Gapfill:
         metabolite_dict :dict
         metabolite_dict formated for gurobi. All metabolites (draft + database)
         This is generated by the Reaction class with the .get_gurobi_metabolite_dict() function.
-        [metabolite_id] : {[reactio_id] : stoichiometry}
+        [metabolite_id] : {[reaction_id] : stoichiometry}
 
         objective_name : str
         name of the reaction to use as an objective.
@@ -309,7 +342,6 @@ class Gapfill:
 
     def gapfill(self,
                 result_selection = "min_reactions",
-                default_cost = 1,
                 ):
 
         '''
@@ -348,17 +380,6 @@ class Gapfill:
         all_reacs_obj.reactions = all_reacs.copy()
         cand_reacs = self.weights.copy()
         self.result_selection = result_selection
-
-        # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
-        for reaction in all_reacs_obj.reactions:
-            if (reaction not in self.draft_reaction_ids) and (reaction not in cand_reacs):
-                cand_reacs[reaction] = default_cost
-
-        # Delete reaction from candidate_reactions if it is present in the starting model.
-        for reaction in self.weights:
-            if reaction in self.draft_reaction_ids:
-                del cand_reacs[reaction]
-
 
         # Split bidirectional reactions into a forward and reverse reaction.
         all_reactions_split = Reaction()
@@ -418,7 +439,11 @@ class Gapfill:
         else:
             self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel)
 
+
         print('Gapfilling added {} reactions'.format(len(self.added_reactions)))
+        if self.grey_list is not None:
+            added_grey = len(set(added_reactions.union(self.grey_list)))
+            print('{} of which were in the grey list'.format(added_grey))
         return self.gapfilledModel
 
     def binarySearch(self,
@@ -515,3 +540,36 @@ class Gapfill:
         minimum_set = self.get_minimum(R, R_flux, R_cost, criteria = self.result_selection)
 
         return  minimum_set
+
+    def remove_candidates(self, list_to_remove):
+        """
+        Function to manually remove candidates from all_reactions and weights.
+        Input:
+            list of reactions to remove from all reactions
+        Output:
+            None
+        """
+        for i in list_to_remove:
+            if i in self.all_reactions.reactions.keys():
+                del self.all_reactions.reactions[i]
+            if i in self.weights.keys():
+                del self.weights[i]
+
+    def punish_candidates(self, list_to_punish, punish_cost):
+        for i in list_to_punish:
+            if i in self.weights.keys():
+                self.weights[i] = punish_cost
+
+    def set_weights(self, custom_weights):
+        """
+        Function to manually set weights.
+        Input:
+            Dictionary of reactions to weights
+        Output:
+            None
+        """
+        for k in custom_weights:
+            if k in self.weights:
+                self.weights[k] = custom_weights[k]
+            else:
+                print("{} not found, ignored")
