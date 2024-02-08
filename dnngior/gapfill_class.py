@@ -37,10 +37,11 @@ class Gapfill:
         self.draft_reaction   = Reaction( model = draftModel )
         self.black_list       = black_list
         self.grey_list        = grey_list
+        self.punish_cost      = punish_cost
         self.medium           = medium
         self.default_cost     = default_cost
 
-        print("test", self.dbType)
+        print("develop gapfill class: db = ", self.dbType)
 
         if dbType == "ModelSEED":
             self.path_to_biochem   = MODELSEED_REACTIONS
@@ -103,7 +104,7 @@ class Gapfill:
             self.remove_candidates(self.black_list)
 
         if self.grey_list is not None:
-            self.punish_candidates(self.grey_list)
+            self.punish_candidates(self.grey_list, self.punish_cost)
 
         # Delete reaction from candidate_reactions if it is present in the starting model.
         rem_draf = []
@@ -440,9 +441,11 @@ class Gapfill:
             self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel)
 
 
-        print('Gapfilling added {} reactions'.format(len(self.added_reactions)))
+        print("NN gapfilling added {} new reactions".format(len(self.added_reactions)))
+        print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(self.gapfilledModel.metabolites), len(self.gapfilledModel.reactions)))
+
         if self.grey_list is not None:
-            added_grey = len(set(added_reactions.union(self.grey_list)))
+            added_grey = len(set(self.added_reactions).union(self.grey_list))
             print('{} of which were in the grey list'.format(added_grey))
         return self.gapfilledModel
 
