@@ -51,5 +51,5 @@ for reaction in db_reactions.reactions:
 
 blank_model.add_reactions(reactionsToadd)
 
-models = os.path.join(path, 'files',  'models', 'exchangeReactions.sbml')
+models = os.path.join(path, 'files',  'models', 'MS_exchanges.sbml')
 cobra.io.write_sbml_model(blank_model, filename=models)
