@@ -10,7 +10,7 @@ import numpy as np
 import os
 import ast
 
-print('test reaction class loaded')
+print('develop reaction class loaded')
 
 class Reaction:
 
