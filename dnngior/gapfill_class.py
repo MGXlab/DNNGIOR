@@ -436,9 +436,9 @@ class Gapfill:
         if self.medium is not None:
             self.gapfilledModel = build_model.refine_model(cobra_model,
                                                            self.draftModel,
-                                                           unscalled = list(self.medium.keys()))
+                                                           unscalled = list(self.medium.keys()), dbType=self.dbType)
         else:
-            self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel)
+            self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel, dbType=self.dbType)
 
 
         print("NN gapfilling added {} new reactions".format(len(self.added_reactions)))
