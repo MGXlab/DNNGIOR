@@ -103,7 +103,8 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None,
             else:#not in modelSEED
                 reac.annotation = {}
                 reac.name = reac.id
-
+    elif dbType=='BiGG':
+        print("skipping refinement, not currently supported")
     #Add genes from a draft model
     if draftModel is not None:
         for reaction in draftModel.reactions:
