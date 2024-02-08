@@ -29,5 +29,5 @@ for met in compounds.index:
             blank_model.add_boundary(blank_model.metabolites.get_by_id(m.id), type="exchange")
             addedMets.append(met)
 
-model_path = os.path.join(MODELS_PATH, 'BG_exchanges.sbml')
+model_path = os.path.join(MODELS_PATH, 'BiGG_exchanges.sbml')
 cobra.io.write_sbml_model(blank_model, filename=model_path)
