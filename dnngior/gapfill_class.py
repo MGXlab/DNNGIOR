@@ -440,7 +440,7 @@ class Gapfill:
         else:
             self.gapfilledModel = build_model.refine_model(cobra_model, self.draftModel, dbType=self.dbType)
 
-
+        self.gapfilledModel.id = "{}_gapfilled".format(self.draftModel.id)
         print("NN gapfilling added {} new reactions".format(len(self.added_reactions)))
         print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(self.gapfilledModel.metabolites), len(self.gapfilledModel.reactions)))
 
