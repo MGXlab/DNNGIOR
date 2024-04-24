@@ -7,19 +7,37 @@ import numpy as np
 import pandas as pd
 import cobra.core.model as cobra_model
 from dnngior.reaction_class import Reaction
+from dnngior import variables
 import os
 import sys
 from math import exp
 from pathlib import Path
 
 class NN:
-    def __init__(self, modeltype=None, path=None, custom=None):
+    def __init__(self, path=None, modeltype=None, custom=None):
         '''
         Light version of the model, saves space, uses only numpy and cobra and no tensorflow
         '''
 
-        self.path=path
-        self.__get_pseudo_network()
+        if custom:
+            self.network   = custom[0]
+            self.modeltype = custom[1]
+            self.rxn_keys  = custom[2]
+        else:
+            if path:
+                self.path=path
+
+            elif modeltype:
+                if modeltype == 'ModelSEED':
+                    self.path = variables.TRAINED_NN_MSEED
+                elif modeltype == 'BIGG':
+                    self.path = variables.TRAINED_NN_BIGG
+            else:
+                print("Modeltype: {} not recognized, defaulting to ModelSEED".format(modeltype))
+                self.path = variables.TRAINED_NN_MSEED
+            self.__get_pseudo_network()
+
+
 
 
             #Function that loads the Neural network; path is path to .h5 file
@@ -75,6 +93,9 @@ class NN:
         else:
             single_input=False
 
+        if not input2.shape[1] == self.network[0][0].shape[0]:
+            raise Exception("Input size ({}) does not match network ({})".format(input2.shape[1], len(self.rxn_keys)))
+            
         a = input2
         for layer in self.network:
             a = a.clip(0)
