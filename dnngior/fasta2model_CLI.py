@@ -7,7 +7,8 @@ __date__ = '15 Jan, 2024'
 import argparse
 import os
 import sys
-from importlib import import_module
+import logging
+import logging.config
 
 def parse_arguments():
     class PathAction(argparse.Action):
@@ -20,10 +21,10 @@ def parse_arguments():
             setattr(namespace, self.dest, path)
 
     parser = argparse.ArgumentParser(
-            prog='build_models_from_genome.py',
+            prog='fasta2model',
             description=('Command line script to build models from a folder with fasta files (-f DIR) or '
             'a folder with ungapfilled base models (-m DIR)'),
-            usage=('python build_model_from_genome.py (-f [DIR] | -d [DIR]) -o output_folder '),
+            usage=('python fasta2model_CLI.py (-f [DIR] | -d [DIR]) -o output_folder '),
             add_help=False
             )
 
@@ -38,7 +39,7 @@ def parse_arguments():
             action=PathAction,
             help=(
                 '[DIR] '
-                'folder containing the fasta files you want to build models for'
+                'Folder containing the fasta files you want to build models for'
                 )
             )
     group.add_argument(
@@ -88,51 +89,56 @@ def parse_arguments():
 
     return args
 
-def build_base_model(path_to_fasta):
+def build_base_model(args):
     from modelseedpy import MSBuilder, MSGenome
     from modelseedpy.core import msmedia
     from modelseedpy.core.rast_client import RastClient
     # Set the path to your genome
-    print("Build MSGenome object")
-    patric_genome = MSGenome.from_fasta(path_to_fasta, split = ' ')
-
+    logging.info("# Building MSGenome object")
+    patric_genome = MSGenome.from_fasta(args.path_to_fasta, split = '|')
     rast = RastClient()
     rast.annotate_genome(patric_genome)
-
-    print("Start building base model")
-    base_model = MSBuilder.build_metabolic_model(model_id = os.path.basename(path_to_fasta),
+    logging.info("# Building base model")
+    base_model = MSBuilder.build_metabolic_model(model_id = args.model_name,
                                                  genome   = patric_genome,
                                                  index    = "0",
                                                  classic_biomass = True,
                                                  gapfill_model   = False,
                                                  gapfill_media   = None,
-                                                 annotate_with_rast = False,
+                                                 annotate_with_rast = True,
                                                  allow_all_non_grp_reactions = True
                                             )
-    print('base model created')
+
+    logging.info('# Base model created with {} reactions'.format(len(base_model.reactions.list_attr('id'))))
     return base_model
 
-def build_gapfilled_model_from_fasta(path_to_fasta, args):
+def build_gapfilled_model_from_fasta(args):
     from cobra.io import write_sbml_model
-    model_name = os.path.basename(path_to_fasta)
-    ug_model = build_base_model(path_to_fasta)
-    print('#reactions: {}'.format(len(ug_model.reactions.list_attr('id'))))
-    ug_location = os.path.join(args.output_folder,'base_models','base_{}'.format(model_name))
-    write_sbml_model(cobra_model = ug_model, filename =ug_location)
-    gapfill_model_wrapper(ug_location, args)
+    args.path_to_base_model = os.path.join(args.output_folder,'base_models','base_{}.xml'.format(args.model_name))
+    if not os.path.isfile(args.path_to_base_model):
+        base_model = build_base_model(args)
+        write_sbml_model(cobra_model = base_model, filename = args.path_to_base_model)
+    else:
+        logging.warning("# Base model {} allready exist, skipping".format(args.model_name))
+    gapfill_model_wrapper(args)
 
-def gapfill_model_wrapper(ug_location, args):
+def gapfill_model_wrapper(args):
     from cobra.io import write_sbml_model
     from dnngior.gapfill_class import Gapfill
     from dnngior.reaction_class import Reaction
-    gf_model = Gapfill(ug_location).gapfilledModel
-    ug_model_name = os.path.basename(ug_location)
-    if ug_model_name.startswith('base_'):
-        model_name = ug_model_name[5:]
+
+    args.path_to_gf_model = os.path.join(args.output_folder,'gapfilled_models','gf_{}.xml'.format(args.model_name))
+    if not os.path.isfile(args.path_to_gf_model):
+        gf_model = Gapfill(args.path_to_base_model)
+        write_sbml_model(cobra_model = gf_model.gapfilledModel, filename =  args.path_to_gf_model)
+        n_dr = len(gf_model.draft_reaction_ids)
+        n_gr = len(gf_model.added_reactions)
+        args.gf_data_file.write('{}\t{}\t{}\t{}\n'.format(args.model_name, n_dr,n_gr,n_dr+n_gr))
     else:
-        model_name = ug_model_name
-    gf_location = os.path.join(args.output_folder,'gapfilled_models','gf_{}'.format(model_name))
-    write_sbml_model(cobra_model = gf_model, filename = gf_location)
+        logging.warning("# Gapfilled model {} allready exists, skipping".format(args.model_name))
+        # gf_model = Gapfill(draftModel=args.path_to_gf_model, gapfill=False)
+        # gf_model.gapfilledModel = gf_model.draftModel
+
 
 def create_output_folder(args):
     if os.path.exists(os.path.dirname(args.output_folder)):
@@ -141,43 +147,70 @@ def create_output_folder(args):
             if not os.path.exists(base_model_folder):
                 os.makedirs(base_model_folder, exist_ok=True)
             else:
-                print('# WARNING: base models folder allready exists')
+                print('# WARNING: base models folder allready exists ({})'.format(base_model_folder))
 
         gf_model_folder = os.path.join(args.output_folder, 'gapfilled_models')
         if not os.path.exists(gf_model_folder):
             print("# Creating output_folder for gapfilled models")
             os.makedirs(gf_model_folder, exist_ok=True)
         else:
-            print('# WARNING: gapfilled models folder allready exists')
+            print('# WARNING: gapfilled models folder allready exists ({})'.format(base_model_folder))
+        # extra_folder = os.path.join(args.output_folder, 'tmp')
+        # if not os.path.exists(extra_folder):
+        #     print("# Creating gapfill info folder")
+        #     os.makedirs(extra_folder, exist_ok=True)
+        # else:
+        #     print('# WARNING: tmp folder already exists')
     else:
         sys.exit('# ERROR: your output_folder should have parents')
 
 def main():
     args = parse_arguments()
     create_output_folder(args)
+    logging.basicConfig(filename=os.path.join(args.output_folder, 'gapfill.log'), filemode='a', format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+
+    #I making my life way too complicated
+    gf_data_location = os.path.join(args.output_folder, 'gf_data.tsv')
+    if os.path.isfile(gf_data_location):
+        file_count = 0
+        gf_data_location = os.path.join(args.output_folder, 'gf_data_{}.tsv')
+        while os.path.isfile(gf_data_location.format(file_count)):
+            file_count += 1
+        gf_data_location = gf_data_location.format(file_count)
+    args.gf_data_file = open(gf_data_location, 'w')
+    args.gf_data_file.write("model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\n")
+
 
     if args.fasta_folder:
         list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith('.faa')]
-        if len(list_of_genomes) == 0:
+        len_list_of_genomes = len(list_of_genomes)
+        if len_list_of_genomes == 0:
             sys.exit('# ERROR: no fasta files found in {}'.format(args.fasta_folder))
-        print('# Building and gapfilling {} models'.format(len(list_of_genomes)))
-        for genome in list_of_genomes:
-            print('# Building and gapfilling: {}'.format(genome))
-            build_gapfilled_model_from_fasta(os.path.join(args.fasta_folder, genome), args)
-        print('# Done')
+        logging.info('# Building and gapfilling {} models'.format(len_list_of_genomes))
+        for i, genome in enumerate(list_of_genomes):
+            args.path_to_fasta = os.path.join(args.fasta_folder, genome)
+            args.model_name = '.'.join(os.path.basename(args.path_to_fasta).split('.')[:-1])
+            logging.info('# Building and gapfilling: {} ({}/{})'.format(genome, i+1, len_list_of_genomes))
+            build_gapfilled_model_from_fasta(args)
+        logging.info('#Done')
 
     elif args.model_folder:
         list_of_models = [i for i in os.listdir(args.model_folder) if i.endswith('.xml')]
-        if len(list_of_models) == 0:
+        len_list_of_models = len(list_of_models)
+        if len_list_of_models == 0:
             sys.exit('# ERROR: no xml files found in {}'.format(args.model_folder))
-        print('# Gapfilling {} models'.format(len(list_of_models)))
-        for model in list_of_models:
-            print('# Gapfilling: {}'.format(model))
-            gapfill_model_wrapper(os.path.join(args.model_folder, model), args)
+        logging.info('# Gapfilling {} models'.format(len_list_of_models))
+        for i, model in enumerate(list_of_models):
+            args.path_to_base_model = os.path.join(args.model_folder, model)
+            args.model_name = '.'.join(os.path.basename(args.path_to_base_model).split('.')[:-1])
+            if args.model_name.startswith('base_'):
+                args.model_name = args.model_name[5:]
+            logging.info('# Gapfilling: {} ({}/{})'.format(model, i+1, len_list_of_models))
+            gapfill_model_wrapper(args)
         print('# Done')
     else:
         sys.exit('I dont think this message can show, if it does, you did something weird')
-
+    #args.gf_data_file.close()
 
 if __name__ == '__main__':
     main()
