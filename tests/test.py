@@ -9,7 +9,6 @@ import logging
 logging.getLogger("cobra").setLevel(logging.ERROR)
 import numpy as np
 
-from dnngior import gapfill_function
 from dnngior.reaction_class import Reaction
 
 from dnngior.build_model import *
