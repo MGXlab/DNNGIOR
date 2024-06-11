@@ -107,7 +107,7 @@ class Gapfill:
             self.remove_candidates(self.black_list)
 
         if self.grey_list is not None:
-            self.punish_candidates(self.grey_list, self.punish_cost)
+            self.set_weights({k:self.punish_cost for k in self.grey_list})
 
         # Delete reaction from candidate_reactions if it is present in the starting model.
         rem_draf = []
@@ -448,8 +448,10 @@ class Gapfill:
         print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(self.gapfilledModel.metabolites), len(self.gapfilledModel.reactions)))
 
         if self.grey_list is not None:
-            added_grey = len(set(self.added_reactions).union(self.grey_list))
+            added_grey = len(self.added_reactions.union(self.grey_list))
             print('{} of which were in the grey list'.format(added_grey))
+
+        print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(self.gapfilledModel.reactions), len(self.gapfilledModel.metabolites)))
         return self.gapfilledModel
 
     def binarySearch(self,
@@ -561,10 +563,6 @@ class Gapfill:
             if i in self.weights.keys():
                 del self.weights[i]
 
-    def punish_candidates(self, list_to_punish, punish_cost):
-        for i in list_to_punish:
-            if i in self.weights.keys():
-                self.weights[i] = punish_cost
     #function to make it a bit easier to load a medium
     def load_medium(path, e_pf='_e'):
         df = pd.read_csv(path, sep='\t')                #load df
@@ -584,7 +582,18 @@ class Gapfill:
             None
         """
         for k in custom_weights:
-            if k in self.weights:
+            if k in self.all_reactions.reactions:
                 self.weights[k] = custom_weights[k]
             else:
-                print("{} not found, ignored")
+                print("{} not found in db, ignored".format(k))
+
+    #This can be used to reset the weights to NN predictions or full default
+    def reset_weights(self, no_NN=False):
+        self.weights={}
+        if not no_NN:
+            self.predicted_reactions = self.NN.predict( self.draft_reaction_ids )
+            for p_reaction in self.predicted_reactions:
+                self.weights[p_reaction]  = np.round(1-self.predicted_reactions[p_reaction], 10)
+        for reaction in self.all_reactions.reactions:
+            if (reaction not in self.draft_reaction_ids) and (reaction not in self.weights):
+                self.weights[reaction] = self.default_cost
