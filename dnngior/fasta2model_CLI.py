@@ -154,7 +154,7 @@ def create_output_folder(args):
             print("# Creating output_folder for gapfilled models")
             os.makedirs(gf_model_folder, exist_ok=True)
         else:
-            print('# WARNING: gapfilled models folder allready exists ({})'.format(base_model_folder))
+            print('# WARNING: gapfilled models folder allready exists ({})'.format(gf_model_folder))
         # extra_folder = os.path.join(args.output_folder, 'tmp')
         # if not os.path.exists(extra_folder):
         #     print("# Creating gapfill info folder")
@@ -182,7 +182,7 @@ def main():
 
 
     if args.fasta_folder:
-        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith('.faa')]
+        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith('.faa') or i.endswith('.faa.gz')]
         len_list_of_genomes = len(list_of_genomes)
         if len_list_of_genomes == 0:
             sys.exit('# ERROR: no fasta files found in {}'.format(args.fasta_folder))
