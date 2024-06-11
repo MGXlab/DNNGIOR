@@ -150,7 +150,7 @@ def custom_weighted_loss(dI, bias, maskI):
         return bias*(1-y_true)*loss+(1-bias)*y_true*loss # return the biased loss y_true are all cases where prediction shouold be 1, 1-y_true all cases where prediction should be one, can scale between these two classes
     return custom_loss
 
-def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo=30, min_con=0, max_con=0, min_for=0.05, max_for=0.3, con_p=None, del_p = None, nlayers=1, nnodes=256,  nepochs=10, b_size=32, dropout=0.1, bias_0=0.3, maskI=True, save=False, output_path='dnngior_predictor.npz', return_history=False, return_lite_network=True):
+def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo=30, min_con=0, max_con=0, min_for=0.05, max_for=0.3, con_p=None, del_p = None, nlayers=1, nnodes=256,  nepochs=10, b_size=32, dropout=0.1, bias_0=0.3, maskI=True, save=True, output_path='dnngior_predictor.npz', return_history=False, return_lite_network=True):
     """
         Most important function, creates actual NN, there are many optional parameters
 
@@ -200,9 +200,9 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
         SAVING PARAMETERS:
 
         save: boolean, optional
-            Whether you want to save the network, default = False
+            Whether you want to save the network, default = True
         output_path: string,
-            Where to save the network, file_extension that work are .h5 and .npz where .h5
+            Where to save the network, file_extension that work are .h5 and .npz
             all other file_extensions defailt to npz (lite network)
             default='dnngior_predictor.npz'
 
@@ -223,7 +223,7 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
     """
 
     print("Num GPUs Available: ", len(config.list_physical_devices('GPU')))
-
+    assert is_path_exists_or_creatable(output_path), "output_path is not valid"
     if(isinstance(data, pd.DataFrame)):
         rxn_keys = data.index
         ndata = np.asarray(data, dtype=np.float32).T
@@ -266,7 +266,6 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
     pseudo_network = np.asarray(pseudo_network, dtype=object)
     #save Network
     if(save):
-        #test of output_path = actually a path?
         if(output_path.endswith('.h5')):
             with h5py.File(output_path, mode='w') as f:
                 network.save(f)
