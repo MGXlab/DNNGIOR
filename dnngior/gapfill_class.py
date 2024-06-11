@@ -445,8 +445,6 @@ class Gapfill:
 
         self.gapfilledModel.id = "{}_gapfilled".format(self.draftModel.id)
         print("NN gapfilling added {} new reactions".format(len(self.added_reactions)))
-        print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(self.gapfilledModel.metabolites), len(self.gapfilledModel.reactions)))
-
         if self.grey_list is not None:
             added_grey = len(self.added_reactions.union(self.grey_list))
             print('{} of which were in the grey list'.format(added_grey))
