@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import cobra.core.model as cobra_model
 from dnngior.reaction_class import Reaction
-from dnngior import variables
+from dnngior.variables import *
 import os
 import sys
 from math import exp
@@ -29,12 +29,15 @@ class NN:
 
             elif modeltype:
                 if modeltype == 'ModelSEED':
-                    self.path = variables.TRAINED_NN_MSEED
-                elif modeltype == 'BIGG':
-                    self.path = variables.TRAINED_NN_BIGG
+                    self.path = TRAINED_NN_MSEED
+                elif modeltype == 'BiGG':
+                    self.path = TRAINED_NN_BIGG
+                else:
+                    print("Modeltype: {} not recognized, defaulting to ModelSEED".format(modeltype))
+                    self.path = TRAINED_NN_MSEED
             else:
-                print("Modeltype: {} not recognized, defaulting to ModelSEED".format(modeltype))
-                self.path = variables.TRAINED_NN_MSEED
+                print("No path or modeltype provided, defaulting to ModelSEED")
+                self.path = TRAINED_NN_MSEED
             self.__get_pseudo_network()
 
 
