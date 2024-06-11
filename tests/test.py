@@ -18,6 +18,7 @@ sys.path.insert(0, base_path)
 
 from dnngior.gapfill_class  import Gapfill
 from dnngior.reaction_class import Reaction
+from dnngior.NN_Trainer import NN
 
 from dnngior.build_model import *
 import cobra
@@ -42,13 +43,11 @@ gapfill_compl_bg      = Gapfill(draftModelBiGG, objectiveName='Growth', dbType =
 
 # Example 2. Gapfilling a model using a defined medium
 # ------------------------------------------------------
-media_file = os.path.join(base_path, 'docs/biochemistry/Nitrogen-Nitrite_media.tsv')
+Nit_media_file = os.path.join(base_path, 'docs/biochemistry/Nitrogen-Nitrite_media.tsv')
+gapfill_nitr     = Gapfill(draftModelMS, medium = Nit_media_file)
 
-Nit_media = {}
-with open(media_file) as f:
-    f.readline()
-    for line in f:
-        a = line.strip().split('\t')
-        Nit_media['EX_' + a[0] + '_e0'] = {'lower_bound':-1, 'upper_bound':1, 'metabolites':{a[0]+'_e0':-1.0}}
+#Example 3. training a network
 
-gapfill_nitr     = Gapfill(draftModelMS, medium = Nit_media, objectiveName = 'bio1')
+file_path = os.path.join(path.parent,'files', 'NN', 'networks')
+data = pd.read_csv(os.path.join(file_path, 'Sample_reaction_presence.csv'), index_col=0)
+network = NN_Trainer.train(data=data, modeltype='ModelSEED',output_path=os.path.join(file_path,'test.npz'), save=True)
