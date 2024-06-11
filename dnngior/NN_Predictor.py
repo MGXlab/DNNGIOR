@@ -74,10 +74,10 @@ class NN:
             #check if reaction class
             input2 = self.__convert_reaction_list(set(input.reactions))
         elif isinstance(input, pd.DataFrame):
-            input.reindex(self.rxn_keys)
+            input1b = input.reindex(self.rxn_keys).fillna(0.0)
             df_columns = input.columns
             #Transpose because rows need to be different models for the network
-            input2 = np.asarray(input.T)
+            input2 = np.asarray(input1b.T)
         elif isinstance(input, dict):
             #check if dictionary, get list of reactions and convert
             input2 = self.__convert_reaction_list([i for i in input if input[i]==1])
@@ -98,7 +98,7 @@ class NN:
 
         if not input2.shape[1] == self.network[0][0].shape[0]:
             raise Exception("Input size ({}) does not match network ({})".format(input2.shape[1], len(self.rxn_keys)))
-            
+
         a = input2
         for layer in self.network:
             a = a.clip(0)
@@ -109,6 +109,8 @@ class NN:
             prediction = dict(zip(self.rxn_keys, np.squeeze(prediction)))
         if isinstance(input, pd.DataFrame):
             prediction = pd.DataFrame(index=self.rxn_keys, columns=df_columns, data=prediction.T)
+            if len(prediction.index) != len(input.index):
+                print('Warning mismatch input vs prediction ({})'.format(len(prediction.index) - len(input.index)))
         return prediction
 
     #function that generates a binary input based on a list of reaction ids
@@ -130,7 +132,7 @@ class NN:
                     b_input.append(1)
                 else:
                     b_input.append(0)
-            print("#reactions not found in keys: ", len(set(reaction_set)) - sum(b_input), '/', len(reaction_set))
+            print("#reactions not found in NN-keys: ", len(set(reaction_set)) - sum(b_input), '/', len(reaction_set))
         except:
             raise Exception("Conversion failed")
 
