@@ -21,7 +21,20 @@ in case you would like to use the `NN_Trainer`.
 
 ## How to use
 
-You may find examples of gapfilling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/example.ipynb).
+Gapfilling models is done using the Gapfill class (dnngior.gapfill_class.Gapfill), in the most simple form: Gapfill(path_to_model)
+
+You may find examples of gapfilling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/gapfilling_example.ipynb).
+
+DNNGIOR can gapfill both ModelSEED and BiGG models, to gapfill BiGG models change modeltype=BiGG. 
+
+
+## Custom Networks
+
+By default DNNGIOR uses an universally trained network capable of accurate predictions under most circumstances. If desired, it is possible to change Neural Network used during gapfilling with trainedNNPath (Gapfill(path_to_model, trainedNNPath=path_to_NN).
+
+You can train your own Neural Network following this tutorial: [example training NN](tutorials/NN_training_example.ipynb).
+
+Alternatively you can find additional custom Neural Networks for several taxonomic groups: [Networks](docs/NN/networks/). Upon request additional specially trained networks can be made available for specific biomes or taxonomic groups.
 
 
 ## License
