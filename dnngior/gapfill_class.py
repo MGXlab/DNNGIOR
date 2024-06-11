@@ -72,6 +72,9 @@ class Gapfill:
 
 
         if self.medium is not None:
+            if isinstance(self.medium, str):
+                print("Loading medium from: {}".format(str))
+                self.medium = self.load_medium(self.medium)
             #####remove the predefined exchange reactions#####
             for react in self.exchange_reacs.reactions:
                 if react in self.draft_reaction_ids:
@@ -419,7 +422,7 @@ class Gapfill:
 
         gapfill_result = set([r.replace('_rv', '') for r in split_gapfill_result])
 
-        self.added_reactions = list(gapfill_result) #All reactions that are added to the model during gapfilling.
+        self.added_reactions = set(gapfill_result) #All reactions that are added to the model during gapfilling.
 
         gapfill_result.update(self.draft_reaction_ids) # ?? Add the reactions from the draft model to the gapfill result?
 
@@ -562,6 +565,15 @@ class Gapfill:
         for i in list_to_punish:
             if i in self.weights.keys():
                 self.weights[i] = punish_cost
+    #function to make it a bit easier to load a medium
+    def load_medium(path, e_pf='_e'):
+        df = pd.read_csv(path, sep='\t')                #load df
+        df['exchanges'] = 'EX_'+df['id']+e_pf           #create exchange_ids
+        df2 = df.set_index('exchanges')                 #dictionary is easier
+        med = {}
+        for ex in df2.index:
+            med[ex] = {'lower_bound':df2['minflux'][ex], 'upper_bound':df2['maxflux'][ex], 'metabolites':{ex[3:]:-1.0}}
+        return med
 
     def set_weights(self, custom_weights):
         """
