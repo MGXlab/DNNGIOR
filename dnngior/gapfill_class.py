@@ -9,7 +9,9 @@ import os
 import gurobipy as gu
 import cobra
 from copy import deepcopy
+
 import numpy as np
+from pandas import read_csv
 
 from dnngior.variables import *
 from dnngior.reaction_class import Reaction
@@ -563,7 +565,7 @@ class Gapfill:
 
     #function to make it a bit easier to load a medium
     def load_medium(path, e_pf='_e'):
-        df = pd.read_csv(path, sep='\t')                #load df
+        df = read_csv(path, sep='\t')                #load df
         df['exchanges'] = 'EX_'+df['id']+e_pf           #create exchange_ids
         df2 = df.set_index('exchanges')                 #dictionary is easier
         med = {}
