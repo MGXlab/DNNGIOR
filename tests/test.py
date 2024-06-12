@@ -9,7 +9,23 @@ import sys
 import logging
 logging.getLogger("cobra").setLevel(logging.ERROR)
 import numpy as np
+<<<<<<< HEAD
 import pandas as pd
+=======
+import sys
+
+from pathlib import Path
+path = Path.cwd()
+
+base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
+sys.path.insert(0, base_path)
+
+
+from dnngior import gapfill_function
+from dnngior.reaction_class import Reaction
+
+from dnngior.build_model import *
+>>>>>>> update_resub
 
 from pathlib import Path
 path = Path.cwd()
@@ -47,8 +63,14 @@ grey_list = ['rxn11062_c0','rxn42178_c0','rxn05017_c0','rxn40445_c0','rxn42091',
 Nit_media_file = os.path.join(base_path, 'docs/biochemistry/Nitrogen-Nitrite_media.tsv')
 gapfill_nitr     = Gapfill(draftModelMS, medium_file = Nit_media_file)
 
+<<<<<<< HEAD
 #Example 3. training a network
 
 file_path = os.path.join(path.parent,'docs', 'NN')
 data = pd.read_csv(os.path.join(file_path, 'Sample_reaction_presence.csv'), index_col=0)
 network = NN_Trainer.train(data=data, modeltype='ModelSEED',output_path=os.path.join(file_path,'networks','test.npz'), save=True)
+=======
+# 
+# for reaction in gapfill_nitr.added_reactions:
+#     print(reaction)
+>>>>>>> update_resub
