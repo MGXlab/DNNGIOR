@@ -34,7 +34,7 @@ By default DNNGIOR uses an universally trained network capable of accurate predi
 
 You can train your own Neural Network following this tutorial: [example training NN](tutorials/NN_training_example.ipynb).
 
-Alternatively you can find additional custom Neural Networks for several taxonomic groups: [Networks](docs/NN/networks/). Upon request additional specially trained networks can be made available for specific biomes or taxonomic groups.
+Alternatively you can find additional custom Neural Networks for several taxonomic groups: [Custom Networks](docs/NN/custom_networks/). Upon request additional specially trained networks can be made available for specific biomes or taxonomic groups.
 
 
 ## License
