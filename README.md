@@ -23,7 +23,7 @@ in case you would like to use the `NN_Trainer`.
 
 Gapfilling models is done using the `Gapfill` class:
 ```python
-import dnngior.gapfill_class.Gapfill)  
+import dnngior.gapfill_class.Gapfill  
 Gapfill(path_to_model)
 ```
 
