@@ -27,7 +27,7 @@ import dnngior.gapfill_class.Gapfill)
 Gapfill(path_to_model)
 ```
 
-You may find examples of gapfilling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/example.ipynb). DNNGIOR can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
+You may find examples of gapfilling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/example.ipynb). `dnngior` can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
 
 ```python
 Gapfill(path_to_BiGG_model, modeltype='BiGG')
@@ -35,7 +35,7 @@ Gapfill(path_to_BiGG_model, modeltype='BiGG')
 
 ## Custom Networks
 
-By default DNNGIOR uses an universally trained network capable of accurate predictions under most circumstances. If desired, it is possible to change Neural Network used during gapfilling:
+By default `dnngior` uses an universally trained network capable of accurate predictions under most circumstances. If desired, it is possible to change Neural Network used during gapfilling:
 
 ```python
 Gapfill(path_to_model, trainedNNPath=path_to_NN)
