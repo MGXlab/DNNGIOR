@@ -48,10 +48,12 @@ Alternatively you can find additional custom Neural Networks for several taxonom
 
 ## License
 
-
+Please see [License](LICENSE)
 
 
 ## Cite
 
+The paper that will accompany the tool is currrently available as preprint:
+https://www.biorxiv.org/content/10.1101/2023.07.10.548314v1
 
 
