@@ -8,6 +8,14 @@ import os
 import logging
 logging.getLogger("cobra").setLevel(logging.ERROR)
 import numpy as np
+import sys
+
+from pathlib import Path
+path = Path.cwd()
+
+base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
+sys.path.insert(0, base_path)
+
 
 from dnngior.reaction_class import Reaction
 
@@ -57,6 +65,6 @@ gf_model_Nit_med = gapfill_nitr.gapfilledModel.copy()
 print("NN gapfilling added {} new readctions".format(len(gapfill_nitr.added_reactions)))
 print("The NN gapfilled model, comes with {} reactions and {} metabolites".format(len(gf_model_Nit_med.metabolites), len(gf_model_Nit_med.reactions)))
 
-
-for reaction in gapfill_nitr.added_reactions:
-    print(reaction)
+# 
+# for reaction in gapfill_nitr.added_reactions:
+#     print(reaction)
