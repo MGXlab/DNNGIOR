@@ -66,18 +66,27 @@ def parse_arguments():
             action=PathAction,
             help=('[DIR] Path to output folder.')
             )
-    
+
+    optional = parser.add_argument_group('Optional arguments')
+
     required.add_argument(
             '-sf',
             '--suffix_faa',
-            default='.faa'
-            required=True,
+            default='.faa',
             type=str,
             action=PathAction,
-            help=('Suffix of the protein fasta file')
+            help=('Suffix of the protein fasta')
     )
-
-    optional = parser.add_argument_group('Optional arguments')
+    
+    optional.add_argument(
+            '-e',
+            '--medium',
+            default=None,    
+            type=str,
+            action=PathAction,
+            help=('[File] path to medium file')
+    )
+    
     optional.add_argument(
             '-v',
             '--version',
@@ -85,6 +94,7 @@ def parse_arguments():
             version=(f'v{__version__} ({__date__}).'),
             help='Print version information and exit.'
             )
+    
     optional.add_argument(
             '-h',
             '--help',
@@ -119,7 +129,7 @@ def build_base_model(args):
                                                  allow_all_non_grp_reactions = True
                                             )
 
-    logging.info(f'# Base model created with {len(base_model.reactions.list_attr('id'))} reactions')
+    logging.info(f'# Base model created with {len(base_model.reactions.list_attr("id"))} reactions')
     return base_model
 
 def build_gapfilled_model_from_fasta(args):
@@ -139,7 +149,7 @@ def gapfill_model_wrapper(args):
 
     args.path_to_gf_model = os.path.join(args.output_folder,'gapfilled_models',f'gf_{args.model_name}.xml')
     if not os.path.isfile(args.path_to_gf_model):
-        gf_model = Gapfill(args.path_to_base_model)
+        gf_model = Gapfill(args.path_to_base_model, medium_file = args.medium)
         write_sbml_model(cobra_model = gf_model.gapfilledModel, filename =  args.path_to_gf_model)
         n_dr = len(gf_model.draft_reaction_ids)
         n_gr = len(gf_model.added_reactions)
@@ -179,14 +189,15 @@ def main():
     create_output_folder(args)
     logging.basicConfig(filename=os.path.join(args.output_folder, 'gapfill.log'), filemode='a', format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
-    #I making my life way too complicated
+    #I am making my life way too complicated
     gf_data_location = os.path.join(args.output_folder, 'gf_data.tsv')
     if os.path.isfile(gf_data_location):
         file_count = 0
         gf_data_location = os.path.join(args.output_folder, f'gf_data_{file_count}.tsv')
-        while os.path.isfile(gf_data_location.format(file_count)):
+        while os.path.isfile(gf_data_location):
             file_count += 1
-        gf_data_location = gf_data_location.format(file_count)
+            gf_data_location = gf_data_location.replace(str(file_count-1),str(file_count))
+
     args.gf_data_file = open(gf_data_location, 'w')
     args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\n')
 

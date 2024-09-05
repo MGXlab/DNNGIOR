@@ -566,7 +566,8 @@ class Gapfill:
                 del self.weights[i]
 
     #function to make it a bit easier to load a medium
-    def load_medium(self, e_pf='_e'):
+    #consider removing the dependence on pandas
+    def load_medium(self, e_pf='_e0'):
         df = read_csv(self.medium_file, sep='\t')                #load df
         df['exchanges'] = 'EX_'+df['id']+e_pf           #create exchange_ids
         df2 = df.set_index('exchanges')                 #dictionary is easier
