@@ -149,11 +149,12 @@ def gapfill_model_wrapper(args):
 
     args.path_to_gf_model = os.path.join(args.output_folder,'gapfilled_models',f'gf_{args.model_name}.xml')
     if not os.path.isfile(args.path_to_gf_model):
+        medium_name = os.path.basename(args.medium)
         gf_model = Gapfill(args.path_to_base_model, medium_file = args.medium)
         write_sbml_model(cobra_model = gf_model.gapfilledModel, filename =  args.path_to_gf_model)
         n_dr = len(gf_model.draft_reaction_ids)
         n_gr = len(gf_model.added_reactions)
-        args.gf_data_file.write(f'{args.model_name}\t{n_dr}\t{n_gr}\t{n_dr+n_gr}\n')
+        args.gf_data_file.write(f'{args.model_name}\t{n_dr}\t{n_gr}\t{n_dr+n_gr}\t{medium_name}\n')
     else:
         logging.warning(f'# Gapfilled model {args.model_name} allready exists, skipping')
         # gf_model = Gapfill(draftModel=args.path_to_gf_model, gapfill=False)
@@ -199,7 +200,7 @@ def main():
             gf_data_location = gf_data_location.replace(str(file_count-1),str(file_count))
 
     args.gf_data_file = open(gf_data_location, 'w')
-    args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\n')
+    args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\tmedium\n')
 
 
     if args.fasta_folder:
@@ -231,7 +232,7 @@ def main():
         print('# Done')
     else:
         sys.exit('I dont think this message can show, if it does, you (or more likely me) did something weird')
-    #args.gf_data_file.close()
+    args.gf_data_file.close()
 
 if __name__ == '__main__':
     main()
