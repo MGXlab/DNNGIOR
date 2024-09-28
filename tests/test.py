@@ -17,7 +17,6 @@ base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
 sys.path.insert(0, base_path)
 
 
-from dnngior import gapfill_function
 from dnngior.reaction_class import Reaction
 
 from dnngior.build_model import *
