@@ -111,6 +111,8 @@ def refine_model(gpfilledModel, draftModel=None, scale = 1000, unscalled = None,
             # So not to fail because we have removed the exchange reactions
             if mc.reactions.has_id(reaction.id):
                 mc.reactions.get_by_id(reaction.id).gene_reaction_rule = reaction.gene_reaction_rule
+                if hasattr(reaction, 'annotation'):
+                    mc.reactions.get_by_id(reaction.id).annotation = reaction.annotation
 
     #change internal fluxes to +/- 1000
     for reaction in mc.reactions:
