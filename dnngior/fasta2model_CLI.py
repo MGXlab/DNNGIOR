@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 __author__ = 'M.D. Boer'
-__version__ = '0.1'
-__date__ = '15 Jan, 2024'
+__version__ = '0.2'
+__date__ = '15 Sept, 2024'
 
 import argparse
 import os

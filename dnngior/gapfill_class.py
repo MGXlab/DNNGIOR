@@ -24,7 +24,7 @@ class Gapfill:
                 draftModel,                     #Model to be gap-filled, required
                 trainedNNPath = None,           #Path to Neural network, if None is provided will default to dbType
                 medium        = None,           #User defined medium
-                medium_file   = None,
+                medium_file   = None,           #Path to used defined medium file
                 black_list    = None,           #reactions to remove from candidates
                 grey_list     = None,           #reactions to punish with high cost
                 punish_cost   = 1000.0,         #high cost to punish with
@@ -74,6 +74,8 @@ class Gapfill:
         self.all_reactions.reactions = self.all_reactions.add_dict(self.exchange_reacs.reactions, self.db_reactions.reactions)
         self.all_reactions.reactions = self.all_reactions.add_dict(self.draft_reaction.reactions, self.all_reactions.reactions)
 
+        if self.medium_file and self.medium:
+            raise Exception("provide medium or path, not both") #If you give both it would be confusing
         if self.medium_file:
             print("Loading medium from: {}".format(self.medium_file))
             self.medium = self.load_medium()
@@ -565,10 +567,10 @@ class Gapfill:
             if i in self.weights.keys():
                 del self.weights[i]
 
-    #function to make it a bit easier to load a medium
+    #Function to make it a bit easier to load a medium
     #consider removing the dependence on pandas
     def load_medium(self, e_pf='_e0'):
-        df = read_csv(self.medium_file, sep='\t')                #load df
+        df = read_csv(self.medium_file, sep='\t')       #load df
         df['exchanges'] = 'EX_'+df['id']+e_pf           #create exchange_ids
         df2 = df.set_index('exchanges')                 #dictionary is easier
         med = {}
