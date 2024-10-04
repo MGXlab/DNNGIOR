@@ -110,6 +110,8 @@ class Gapfill:
                 self.weights[reaction] = default_cost
 
         if self.black_list is not None:
+            if self.draft_reaction_ids.intersection(self.black_list):
+                raise Exception("Blacklist cannot contain reactions from the draft model")
             self.remove_candidates(self.black_list)
 
         if self.grey_list is not None:
