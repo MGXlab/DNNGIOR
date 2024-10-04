@@ -21,7 +21,7 @@ compounds_dict   = compounds_helper.loadCompounds()
 blank_model = cobra.Model("exchangeReactions")
 
 biochem = os.path.join(path, 'files',  'biochemistry', 'reactions.tsv')
-db_reactions = Reaction(biochem_input=biochem)
+db_reactions = Reaction(biochem_input=biochem, dbType='ModelSEED')
 
 reactionsToadd = []
 
@@ -29,7 +29,7 @@ addedMets = []
 
 for reaction in db_reactions.reactions:
     for met in db_reactions.reactions[reaction]["metabolites"]:
-        if "e0" in met: 
+        if "e0" in met:
 
             if met not in addedMets:
 
@@ -43,7 +43,7 @@ for reaction in db_reactions.reactions:
 
                 r.upper_bound = 1000
                 r.lower_bound = -1000
-                
+
                 reactionsToadd.append(r.copy())
 
                 addedMets.append(met)
@@ -51,5 +51,5 @@ for reaction in db_reactions.reactions:
 
 blank_model.add_reactions(reactionsToadd)
 
-models = os.path.join(path, 'files',  'models', 'exchangeReactions.sbml')
+models = os.path.join(path, 'files',  'models', 'MS_exchanges.sbml')
 cobra.io.write_sbml_model(blank_model, filename=models)

@@ -1,7 +1,7 @@
 __version__ = "0.0.3"
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 import tarfile
 from pathlib import Path
 
@@ -28,7 +28,7 @@ from dnngior.MSEED_compounds import Compounds
 from dnngior.MSEED_reactions import Reactions
 from dnngior.reaction_class  import Reaction
 
-import dnngior.addExchanges 
+import dnngior.addExchanges
 
 from dnngior.gapfill_class import Gapfill
 
