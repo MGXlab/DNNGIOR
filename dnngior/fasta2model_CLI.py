@@ -23,8 +23,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
             prog='fasta2model',
             description=('Command line script to build models from a folder with fasta files (-f DIR) or '
-            'a folder with ungapfilled base models (-m DIR)'),
-            usage=('python fasta2model_CLI.py (-f [DIR] | -d [DIR]) -o output_folder '),
+            'a folder with ungapfilled base models (-m DIR). It will create an output folder at -o.'),
+            usage=('python fasta2model_CLI.py (-f DIR_FASTA | -d DIR_MODELS) -o output_folder [-e MEDIUM_FILE]'),
             add_help=False
             )
 
@@ -51,7 +51,7 @@ def parse_arguments():
             action=PathAction,
             help=(
                 '[DIR] '
-                'Folder in case you allready have base models'
+                'Folder containing the model files if you allready have base models'
             )
     )
 
@@ -69,13 +69,20 @@ def parse_arguments():
 
     optional = parser.add_argument_group('Optional arguments')
 
-    required.add_argument(
+    optional.add_argument(
             '-sf',
             '--suffix_faa',
             default='.faa',
             type=str,
-            action=PathAction,
-            help=('Suffix of the protein fasta')
+            help=('Suffix of the protein fasta (default .faa)')
+    )
+
+    optional.add_argument(
+        '-sm',
+        '--suffix_model',
+        default='.xml',
+        type=str,
+        help=('Suffix of the ungapfilled models (default .xml)')
     )
     
     optional.add_argument(
@@ -134,7 +141,7 @@ def build_base_model(args):
 
 def build_gapfilled_model_from_fasta(args):
     from cobra.io import write_sbml_model
-    args.path_to_base_model = os.path.join(args.output_folder,f'base_models','base_{args.model_name}.xml')
+    args.path_to_base_model = os.path.join(args.output_folder,'base_models',f'base_{args.model_name}{args.suffix_model}')
     if not os.path.isfile(args.path_to_base_model):
         base_model = build_base_model(args)
         write_sbml_model(cobra_model = base_model, filename = args.path_to_base_model)
@@ -147,10 +154,14 @@ def gapfill_model_wrapper(args):
     from dnngior.gapfill_class import Gapfill
     from dnngior.reaction_class import Reaction
 
-    args.path_to_gf_model = os.path.join(args.output_folder,'gapfilled_models',f'gf_{args.model_name}.xml')
+    args.path_to_gf_model = os.path.join(args.output_folder,'gapfilled_models',f'gf_{args.model_name}{args.suffix_model}')
     if not os.path.isfile(args.path_to_gf_model):
-        medium_name = os.path.basename(args.medium)
-        gf_model = Gapfill(args.path_to_base_model, medium_file = args.medium)
+        if args.medium:
+            medium_name = os.path.basename(args.medium)
+            gf_model = Gapfill(args.path_to_base_model, medium_file = args.medium)
+        else:
+            medium_name = 'Complete'
+            gf_model = Gapfill(args.path_to_base_model)
         write_sbml_model(cobra_model = gf_model.gapfilledModel, filename =  args.path_to_gf_model)
         n_dr = len(gf_model.draft_reaction_ids)
         n_gr = len(gf_model.added_reactions)
@@ -204,7 +215,7 @@ def main():
 
 
     if args.fasta_folder:
-        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith('.faa') or i.endswith('.faa.gz')]
+        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith(args.suffix_faa) or i.endswith(args.suffix_faa+'.gz')]
         len_list_of_genomes = len(list_of_genomes)
         if len_list_of_genomes == 0:
             sys.exit(f'# ERROR: no fasta files found in {args.fasta_folder}')
@@ -217,10 +228,10 @@ def main():
         logging.info('#Done')
 
     elif args.model_folder:
-        list_of_models = [i for i in os.listdir(args.model_folder) if i.endswith('.xml')]
+        list_of_models = [i for i in os.listdir(args.model_folder) if i.endswith(args.suffix_model)]
         len_list_of_models = len(list_of_models)
         if len_list_of_models == 0:
-            sys.exit(f'# ERROR: no xml files found in {args.model_folder}')
+            sys.exit(f'# ERROR: no model files found in {args.model_folder}')
         logging.info(f'# Gapfilling {len_list_of_models} models')
         for i, model in enumerate(list_of_models):
             args.path_to_base_model = os.path.join(args.model_folder, model)
