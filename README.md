@@ -2,7 +2,7 @@
 
 ## Installation instructions
 
-To run the `dnngior` gapfiller, the [Gurobi](https://www.gurobi.com/) solver is required (mandatory).
+To run the `dnngior` gapfiller, the [Gurobi](https://www.gurobi.com/) solver is mandatory.
 
 ```bash
 pip install gurobipy
@@ -49,9 +49,12 @@ Alternatively you can find additional custom Neural Networks for several taxonom
 ## License
 
 
+Please see [License](LICENSE)
 
 
 ## Cite
 
+The paper that will accompany the tool is can be found here:\
+https://www.cell.com/iscience/fulltext/S2589-0042(24)02574-4
 
 
