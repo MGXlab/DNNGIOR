@@ -45,7 +45,7 @@ class Gapfill:
         self.medium_file      = medium_file
         self.default_cost     = default_cost
 
-        print("develop gapfill class: db = ", self.dbType)
+        print("Gap-filling database = ", self.dbType)
 
         if dbType == "ModelSEED":
             self.path_to_biochem   = MODELSEED_REACTIONS

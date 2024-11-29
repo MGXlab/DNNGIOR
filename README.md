@@ -27,7 +27,7 @@ import dnngior.gapfill_class.Gapfill
 Gapfill(path_to_model)
 ```
 
-You may find examples of gap-filling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/example.ipynb). `dnngior` can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
+You may find examples of gap-filling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/gapfilling_example.ipynb). `dnngior` can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
 
 ```python
 Gapfill(path_to_BiGG_model, modeltype='BiGG')
