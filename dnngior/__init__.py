@@ -1,7 +1,6 @@
 __version__ = "0.0.3"
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 import tarfile
 from pathlib import Path
 
@@ -38,6 +37,7 @@ from dnngior.NN_Predictor import NN
 
 try:
     from dnngior.NN_Trainer import noise_data, generate_training_set, custom_weighted_loss, train
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 except:
     print("WARNING: To enable the NN_Trainer script, you need to install tensorflow <https://www.tensorflow.org/install>\n"
           "The rest of dnngior features can be used without it.")
