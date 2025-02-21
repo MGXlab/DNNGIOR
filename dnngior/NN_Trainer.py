@@ -73,7 +73,7 @@ def noise_data(i, noise_0, noise_1, del_p, con_p):
     o = temp
     return o
 
-def generate_feature(data,nuplo, min_con, max_con, min_for, max_for, del_p, con_p):
+def generate_feature(data, nuplo, min_con, max_con, min_for, max_for, del_p, con_p):
     """
     Function to generate the dataset for training (feature).
         PARAMETERS:
