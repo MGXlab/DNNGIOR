@@ -561,7 +561,7 @@ class Gapfill:
         Input:
             list of reactions to remove from all reactions
         Output:
-            None
+            list of reactions with reactions removed
         """
         for i in list_to_remove:
             if i in self.all_reactions.reactions.keys():

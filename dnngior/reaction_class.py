@@ -10,8 +10,6 @@ import numpy as np
 import os
 import ast
 
-print('develop reaction class loaded')
-
 class Reaction:
 
     def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType=None, fixed_bounds=None):
@@ -162,7 +160,7 @@ class Reaction:
                 reactions[reaction_id]['metabolites'] = {i:mets[i] for i in mets}
             else:
                 reactions[reaction] = {'lower_bound':-1.0, 'upper_bound':1.0}
-                reactions[reaction]['metabolites'] = eval(react_d[reaction][0])
+                reactions[reaction]['metabolites'] = eval(react_d[reaction][0]) #Evaluate the string as a dictionary.
 
 
         return reactions
