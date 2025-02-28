@@ -10,10 +10,9 @@ import numpy as np
 import os
 import ast
 
-
 class Reaction:
 
-    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType="ModelSEED", fixed_bounds=None):
+    def __init__(self, model_folder=None, model_list=None, model=None, biochem_input=None, dbType=None, fixed_bounds=None):
         '''
         General class to handle reaction sets from metabolic models.
 
@@ -123,15 +122,13 @@ class Reaction:
 
 
                 #boundaries set to 1 and -1 make gapfilling cleaner,
-
                 #the external media should also be in this range.
 
-                if direction == '=':
+                #if unknown assume biodirectional
+                if direction == '=' or direction == '?':
                     reactions[reaction_id] = {'lower_bound':-1.0, 'upper_bound':1.0}
-
                 else:
                     reactions[reaction_id] = {'lower_bound':0.0, 'upper_bound':1.0}
-
 
                 mets={}
 
@@ -149,6 +146,9 @@ class Reaction:
                             elif int(loc) == 1:
                                 name = cpd + '_e0'
 
+                            elif int(loc) == 2:
+                                name = cpd + '_p0'
+
                             else: #if the loc of the metabolite is not specified, define it as cellular
                                 name = cpd + '_c0'
 
@@ -160,23 +160,8 @@ class Reaction:
                 reactions[reaction_id]['metabolites'] = {i:mets[i] for i in mets}
             else:
                 reactions[reaction] = {'lower_bound':-1.0, 'upper_bound':1.0}
-                reaction_split = react_d[reaction].split(' ')
-                mets = {}
-                side = 1
-                for i in reaction_split:
-                    if(len(i) > 1):
-                        stoc = 1.0
-                        if not('_' in i):
-                            if i[0].isdigit():
-                                stoc = float(i) * side
-                            else:
-                                if i == '<->':
-                                    side = -1
-                        else:
-                            mets[i] = stoc
+                reactions[reaction]['metabolites'] = eval(react_d[reaction][0]) #Evaluate the string as a dictionary.
 
-                reactions[reaction]['metabolites'] = {i:mets[i] for i in mets}
-                metabolites = react_d[reaction][0].split(';')
 
         return reactions
 
@@ -340,7 +325,7 @@ class Reaction:
             for line in f:
                 splitted_line = line.strip().split("\t")
                 if(self.dbType=='ModelSEED'):
-                    biochem[splitted_line[0]] = [splitted_line[4], splitted_line[9], splitted_line[6]]
+                    biochem[splitted_line[0]] = [splitted_line[4], splitted_line[8], splitted_line[6]]
                 else:
-                    biochem[splitted_line[0]] = splitted_line[2]
+                    biochem[splitted_line[0]] = [splitted_line[2], splitted_line[3]]
         return biochem

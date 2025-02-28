@@ -17,7 +17,7 @@ import os
 import sys
 from tensorflow import compat, config, dtypes
 
-import dnngior.NN_Predictor
+from dnngior.NN_Predictor import NN
 
 # Tensorflow; please consider: https://www.tensorflow.org/api_docs/python/tf/compat/v1/disable_eager_execution
 compat.v1.disable_eager_execution()
@@ -31,7 +31,7 @@ def noise_data(i, noise_0, noise_1, del_p, con_p):
         ----------
         i : numpy array, required
             an array of 0s and 1s which you want to noisify
-        noise_0 : numpy array, required
+        noise_0 : numpy array, requiredimport dnngior.NN_Predictor
             fraction of 0s to change to 1s
         noise_1 : numpy array, required
             fraction of 1s to change to 0s
@@ -73,7 +73,7 @@ def noise_data(i, noise_0, noise_1, del_p, con_p):
     o = temp
     return o
 
-def generate_training_set(data,nuplo, min_con, max_con, min_for, max_for, del_p, con_p):
+def generate_feature(data, nuplo, min_con, max_con, min_for, max_for, del_p, con_p):
     """
     Function to generate the dataset for training (feature).
         PARAMETERS:
@@ -150,7 +150,7 @@ def custom_weighted_loss(dI, bias, maskI):
         return bias*(1-y_true)*loss+(1-bias)*y_true*loss # return the biased loss y_true are all cases where prediction shouold be 1, 1-y_true all cases where prediction should be one, can scale between these two classes
     return custom_loss
 
-def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo=30, min_con=0, max_con=0, min_for=0.05, max_for=0.3, con_p=None, del_p = None, nlayers=1, nnodes=256,  nepochs=10, b_size=32, dropout=0.1, bias_0=0.3, maskI=True, save=False, name='noname', output_path='', return_history=False):
+def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo=30, min_con=0, max_con=0, min_for=0.05, max_for=0.3, con_p=None, del_p = None, nlayers=1, nnodes=256,  nepochs=10, b_size=32, dropout=0.1, bias_0=0.3, maskI=True, save=True, output_path='dnngior_predictor.npz', return_history=False, return_full_network=False):
     """
         Most important function, creates actual NN, there are many optional parameters
 
@@ -168,7 +168,7 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
 
         TRAINING PARAMETERS:
         -------
-        see generate_training_set() ^
+        see generate_feature() ^
 
         NETWORK PARAMETERS
         -------------
@@ -200,23 +200,36 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
         SAVING PARAMETERS:
 
         save: boolean, optional
-            Whether you want to save the network, default = False
-        name: string, optional
-            name of your network, default='noname'
+            Whether you want to save the network, default = True
         output_path: string,
-            where output, default=''
+            Where to save the network, file_extension that work are .h5 and .npz
+            all other file_extensions defailt to npz (lite network)
+            default='dnngior_predictor.npz'
+
+        OPTIONAL RETURNS:
+
         return_history: boolean, optional
             If you want training history
-
+            default = False
+        return_full_network: boolean, optional
+            if you want to return the lite_network or full tensorflow object
+            default = False
        Returns:
         -------------
         trainedNN
             NN class containing network, rxn_keys and modeltype
-        history: type, if history=True
+        history: if history=True
             history of training
     """
 
     print("Num GPUs Available: ", len(config.list_physical_devices('GPU')))
+
+    if os.path.exists(output_path):
+        print("# WARNING: overwriting savefile")
+    elif os.access(os.path.dirname(output_path), os.W_OK):
+        print("Saving network at: {}".format(output_path))
+    else:
+        Exception("Can not save at: {}".format(output_path))
 
     if(isinstance(data, pd.DataFrame)):
         rxn_keys = data.index
@@ -224,15 +237,20 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
     elif rxn_keys is None:
         raise(Exception('Provide DataFrame or rxn_keys'))
 
-    #create feature and labels from training data
+    #create feature from training data
     if(labels is None):
-        labels = np.repeat(np.copy(ndata), nuplo, axis=0).astype(np.float32)
+        feature = np.repeat(np.copy(ndata), nuplo, axis=0).astype(np.float32)
         print('using data as labels')
     else:
-        labels = np.repeat(np.copy(labels), nuplo, axis=0).astype(np.float32)
+        if(isinstance(labels, pd.DataFrame)):
+            rxn_keys = data.index
+            nlabels = np.asarray(labels, dtype=np.float32).T
+        else:
+            nlabels = labels.astype(np.float32).T
+        feature = np.repeat(np.copy(nlabels), nuplo, axis=0).astype(np.float32)
         print("using user provided labels")
 
-    train_data = generate_training_set(ndata, nuplo, min_con, max_con, min_for, max_for, del_p, con_p)
+    train_data = generate_feature(ndata, nuplo, min_con, max_con, min_for, max_for, del_p, con_p)
 
     print('dataset created')
     nmodels, nreactions = ndata.shape
@@ -253,23 +271,28 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
     #print summary of model
     network.summary()
     #train model, history can be used to observe training
-    history = network.fit(train_data, labels, validation_split = validation_split, epochs = nepochs, shuffle=True, batch_size = b_size, verbose=1)
+    history = network.fit(train_data, feature, validation_split = validation_split, epochs = nepochs, shuffle=True, batch_size = b_size, verbose=1)
     pseudo_network = []
     for i in range(0, len(network.layers),2):
         pseudo_network.append(network.layers[i].get_weights())
     pseudo_network = np.asarray(pseudo_network, dtype=object)
     #save Network
     if(save):
-        if(save == 'h5'):
-            network_path = os.path.join(output_path, "{}.h5".format(name))
-            with h5py.File(model_path, mode='w') as f:
+        if(output_path.endswith('.h5')):
+            with h5py.File(output_path, mode='w') as f:
                 network.save(f)
                 f.attrs['modeltype'] = modeltype
                 f.create_dataset("rxn_keys", data =[n.encode("ascii", "ignore") for n in rxn_keys])
         else:
-            network_path = os.path.join(output_path, "{}.npz".format(name))
-            np.savez(network_path,network=pseudo_network, modeltype=modeltype,rxn_keys=rxn_keys)
-    trainedNN = NN_Predictor.NN(custom=[pseudo_network,rxn_keys,modeltype])
+            if not output_path.endswith('.npz'):
+                file_extension = output_path.split('.')[-1]
+                print('{} not recognized, saving as .npz (lite) instead'.format(file_extension))
+                output_path.replace(file_extension, '.npz')
+            np.savez(output_path,network=pseudo_network, modeltype=modeltype,rxn_keys=rxn_keys)
+    if return_full_network:
+        trainedNN = NN(custom=[network,modeltype,rxn_keys])
+    else:
+        trainedNN = NN(custom=[pseudo_network,modeltype,rxn_keys])
     if return_history:
         return trainedNN, history
     else:

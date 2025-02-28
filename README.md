@@ -27,7 +27,7 @@ import dnngior.gapfill_class.Gapfill
 Gapfill(path_to_model)
 ```
 
-You may find examples of gap-filling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/example.ipynb). `dnngior` can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
+You may find examples of gap-filling a genome scale reconstruction (GEM) with `dnngior` with a complete or a defined medium in this [example notebook](tutorials/gapfilling_example.ipynb). `dnngior` can gapfill both ModelSEED and BiGG models, to gapfill BiGG models you need to specify modeltype. 
 
 ```python
 Gapfill(path_to_BiGG_model, modeltype='BiGG')
@@ -48,12 +48,13 @@ Alternatively you can find additional custom Neural Networks for several taxonom
 
 ## License
 
+
 Please see [License](LICENSE)
 
 
 ## Cite
 
-The paper that will accompany the tool is currrently available as preprint:\
-https://www.biorxiv.org/content/10.1101/2023.07.10.548314v2
+The paper that will accompany the tool is can be found here:\
+https://www.cell.com/iscience/fulltext/S2589-0042(24)02574-4
 
 
