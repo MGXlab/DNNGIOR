@@ -132,7 +132,7 @@ class Reactions:
 
         #For empty reaction
         if(stoichiometry == ""):
-            return rxn_cpds_array
+            return rxn_cpds_dict
 
         for rgt in stoichiometry.split(";"):
             (coeff, cpd, cpt, index, name) = rgt.split(":", 4)
