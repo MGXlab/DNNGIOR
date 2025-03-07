@@ -132,7 +132,8 @@ class NN:
                     b_input.append(1)
                 else:
                     b_input.append(0)
-            print("#reactions not found in NN-keys: ", len(set(reaction_set)) - sum(b_input), '/', len(reaction_set))
+            list_of_exchanges = [i for i in reaction_list if i.startswith('EX')]
+            print("#reactions not found in NN-keys: ", len(set(reaction_set)) - sum(b_input) - len(list_of_exchanges), '/', len(reaction_set))
         except:
             raise Exception("Conversion failed")
 
