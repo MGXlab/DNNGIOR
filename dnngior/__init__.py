@@ -36,7 +36,7 @@ from dnngior.build_model import refine_model
 from dnngior.NN_Predictor import NN
 
 try:
-    from dnngior.NN_Trainer import noise_data, generate_training_set, custom_weighted_loss, train
+    from dnngior.NN_Trainer import noise_data, generate_feature, custom_weighted_loss, train
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 except:
     print("WARNING: To enable the NN_Trainer script, you need to install tensorflow <https://www.tensorflow.org/install>\n"
