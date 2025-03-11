@@ -27,12 +27,12 @@ import gurobipy as gp
 from gurobipy import GRB
 
 
-# Example 1. Gapfilling a model using a complete medium
-# -----------------------------------------------------
-
-
 draftModelMS = os.path.join(base_path, "docs/models/E_coli_KTE31_388739.3_draft.sbml")
 draftModelBiGG = os.path.join(base_path, "docs/models/bigg_example.xml")
+
+
+# Example 1. Gapfilling a model using a complete medium
+# -----------------------------------------------------
 
 grey_list = ['rxn11062_c0','rxn42178_c0','rxn05017_c0','rxn40445_c0','rxn42091','rxn47890','rxn39398_c0', 'rxn21619_c0', 'rxn21618_c0', 'rxn31418_c0', 'rxn03190_c0', 'rxn45845_c0', 'rxn21663', 'rxn41716_c0','rxn45646_c0']
 
@@ -48,9 +48,15 @@ gapfill_nitr     = Gapfill(draftModelMS, medium_file = Nit_media_file)
 
 #Example 3. training a network
 
-file_path = os.path.join(path.parent,'docs', 'NN')
-data = pd.read_csv(os.path.join(file_path, 'Sample_reaction_presence.csv'), index_col=0)
-network = NN_Trainer.train(data=data, modeltype='ModelSEED',output_path=os.path.join(file_path,'custom_networks','test.npz'), save=True)
+NN_path = os.path.join(path.parent,'docs', 'NN')
+data = pd.read_csv(os.path.join(NN_path, 'Sample_reaction_presence.csv'), index_col=0)
+network = NN_Trainer.train(data=data, modeltype='ModelSEED',output_path=os.path.join(NN_path,'custom_networks','test.npz'), save=True)
+tensor_network = NN_Trainer.train(data=data, modeltype='ModelSEED',return_full_network=True, save=False)
+#Custom network
+Gapfill(draftModelMS, trainedNNPath=os.path.join(NN_path, "custom_networks","test.npz"))
+model = cobra.io.read_sbml_model(draftModelMS)
+tensor_network.predict(model)
+network.predict(model)
 
 #
 # for reaction in gapfill_nitr.added_reactions:
