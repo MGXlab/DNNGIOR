@@ -38,12 +38,15 @@ class NN:
             else:
                 print("No path or modeltype provided, defaulting to ModelSEED")
                 self.path = TRAINED_NN_MSEED
-            self.__get_pseudo_network()
+            if(self.path.endswith('.npz')):
+                self.__get_pseudo_network()
+            else:
+                raise Exception("Please provide a path to a light network (.npz file) or provide weights manually")
 
 
 
 
-            #Function that loads the Neural network; path is path to .h5 file
+    #Function that loads the Neural network; 
     def __get_pseudo_network(self):
 
         f = np.load(self.path, allow_pickle=True)
@@ -87,7 +90,7 @@ class NN:
         elif np.isin(input, [0,1]).all():
             input2 = np.asarray(input.T)
         else:
-            raise Exception("input type")
+            raise Exception("Please provide a model, dataframe, dictionary, list, set or binary array.")
 
         #test for single input (trips up NN)
         if np.ndim(input2) == 1:
@@ -96,15 +99,18 @@ class NN:
         else:
             single_input=False
 
-        if not input2.shape[1] == self.network[0][0].shape[0]:
+        if(isinstance(self.network,np.ndarray)):
+          if not input2.shape[1] == self.network[0][0].shape[0]:
             raise Exception("Input size ({}) does not match network ({})".format(input2.shape[1], len(self.rxn_keys)))
-
-        a = input2
-        for layer in self.network:
-            a = a.clip(0)
-            a = ((a @ layer[0]) + layer[1])
-        prediction =  1 / (1 + np.exp(-a))#sigmoid(a)
-
+          a = input2
+          for layer in self.network:
+              a = a.clip(0)
+              a = ((a @ layer[0]) + layer[1])
+          prediction =  1 / (1 + np.exp(-a))#sigmoid(a)
+          
+        else:
+          prediction = self.network.predict(input2)#TODO test input size
+    
         if single_input:
             prediction = dict(zip(self.rxn_keys, np.squeeze(prediction)))
         if isinstance(input, pd.DataFrame):
@@ -121,7 +127,7 @@ class NN:
         """
         try:
             b_input = []
-            #I think that at this point this might be the only reason I would need modeltype, there are few things I am as annoyed with as the _c0
+            
             if(self.modeltype=='ModelSEED'):
                 reaction_list = [reaction[:8]+'_c0' if 'rxn' in reaction else reaction for reaction in reaction_set]
                 self.rxn_keys  = [key[:8]+'_c0' if 'rxn' in key else key for key in self.rxn_keys ]
