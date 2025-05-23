@@ -54,7 +54,7 @@ Please see [License](LICENSE)
 
 ## Cite
 
-The paper that will accompany the tool is can be found here:\
+The paper that accompanies the tool can be found here:\
 https://www.cell.com/iscience/fulltext/S2589-0042(24)02574-4
 
 
