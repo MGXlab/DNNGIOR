@@ -68,6 +68,13 @@ class Gapfill:
         # if you have a defined medium, set the fixed_bounds argument accordingly
         self.exchange_reacs =   Reaction(model = self.path_to_exchanges, fixed_bounds = self.medium)
         self.db_reactions   =   Reaction(biochem_input = self.path_to_biochem, dbType=self.dbType)
+        #The name of sulfur transport is St, this means something in gurobi, so we rename it to SULFD
+        #This should not be true for the database provided with the package, but it does not hurt to check
+        if dbType == 'BiGG':
+            if 'St' in self.db_reactions.reactions:
+                print('WARNING: St is a protected keyword for gurobi, renaming to SULFD')
+                self.db_reactions.reactions['SULFD'] = self.db_reactions.reactions['St']
+                del self.db_reactions.reactions['St']
 
         # Merge reactions from db with those of the draft model
         self.all_reactions           = Reaction(fixed_bounds = self.medium, dbType=self.dbType)
@@ -102,7 +109,17 @@ class Gapfill:
             self.predicted_reactions = self.NN.predict( self.draft_reaction_ids )
             for p_reaction in self.predicted_reactions:
                 self.weights[p_reaction]  = np.round(1-self.predicted_reactions[p_reaction], 10)
-
+        
+        #The name of sulfur transport is St, this means something in gurobi, so we rename it to SULFT
+        if dbType == 'BiGG':
+            if 'St' in self.weights:
+                print('WARNING: St is a protected keyword for gurobi, renaming candidate to SULFD')
+                self.weights['SULFD'] = self.weights['St']
+                del self.weights['St']
+            if 'St' in self.draft_reaction_ids:
+                print('WARNING: St is a protected keyword for gurobi, renaming draft reaction to SULFD')
+                self.draft_reaction_ids['SULFD'] = self.draft_reaction_ids['St']
+                self.draft_reaction_ids.remove('St')
 
         # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
         for reaction in self.all_reactions.reactions:
