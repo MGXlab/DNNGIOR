@@ -160,7 +160,10 @@ class Reaction:
                 reactions[reaction_id]['metabolites'] = {i:mets[i] for i in mets}
             else:
                 reactions[reaction] = {'lower_bound':-1.0, 'upper_bound':1.0}
-                reactions[reaction]['metabolites'] = eval(react_d[reaction][0]) #Evaluate the string as a dictionary.
+                try:
+                    reactions[reaction]['metabolites'] = ast.literal_eval(react_d[reaction][0]) #Evaluate the string as a dictionary.
+                except ValueError as e:
+                    raise TypeError(f"Could not parse metabolites for reaction {reaction} in biochemistry input {biochem_input}. Please check the format of the biochemistry file.") from e
 
 
         return reactions
