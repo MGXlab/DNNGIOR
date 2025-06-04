@@ -9,8 +9,6 @@ import sys
 import cobra
 import logging
 logging.getLogger("cobra").setLevel(logging.ERROR)
-import numpy as np
-import pandas as pd
 
 from pathlib import Path
 path = Path.cwd()
@@ -45,7 +43,3 @@ gapfill_compl_bg      = Gapfill(draftModelBiGG, objectiveName='Growth', dbType =
 # ------------------------------------------------------
 Nit_media_file = os.path.join(base_path, 'docs/biochemistry/Nitrogen-Nitrite_media.tsv')
 gapfill_nitr     = Gapfill(draftModelMS, medium_file = Nit_media_file)
-
-#
-# for reaction in gapfill_nitr.added_reactions:
-#     print(reaction)

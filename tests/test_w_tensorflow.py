@@ -1,4 +1,18 @@
-from dnngior import NN_Trainer
+import sys
+import os
+from pathlib import Path
+import numpy as np
+import pandas as pd
+from cobra.io import read_sbml_model
+path = Path.cwd()
+
+base_path  = "/".join(os.path.abspath(__file__).split("/")[:-2])
+sys.path.insert(0, base_path)
+draftModelMS = os.path.join(base_path, "docs/models/E_coli_KTE31_388739.3_draft.sbml")
+
+
+from dnngior import NN_Trainer 
+from dnngior.NN_Predictor import NN
 from dnngior.gapfill_class  import Gapfill
 #Example 3. training a network
 
@@ -8,6 +22,7 @@ network = NN_Trainer.train(data=data, modeltype='ModelSEED',output_path=os.path.
 tensor_network = NN_Trainer.train(data=data, modeltype='ModelSEED',return_full_network=True, save=False)
 #Custom network
 Gapfill(draftModelMS, trainedNNPath=os.path.join(NN_path, "custom_networks","test.npz"))
-model = cobra.io.read_sbml_model(draftModelMS)
+model = read_sbml_model(draftModelMS)
 tensor_network.predict(model)
 network.predict(model)
+
