@@ -83,6 +83,15 @@ def parse_arguments():
         type=str,
         help=('Suffix of the ungapfilled models (default .xml)')
     )
+
+    optional.add_argument(
+        '-sep',
+        '--separator',
+        default='|',
+        type=str,
+        help=('Separator used in the fasta headers (default "|")')
+    )
+
     
     optional.add_argument(
             '-e',
@@ -137,7 +146,7 @@ def build_base_model(args):
     from modelseedpy.core.rast_client import RastClient
     # Set the path to your genome
     logging.info('# Building MSGenome object')
-    patric_genome = MSGenome.from_fasta(args.path_to_fasta, split = '|')
+    patric_genome = MSGenome.from_fasta(args.path_to_fasta, split = args.separator)
     rast = RastClient()
     rast.annotate_genome(patric_genome)
     logging.info('# Building base model')
@@ -284,6 +293,7 @@ def main():
     - Optional:
         -sf, --suffix_faa: Suffix of the protein FASTA files (default: .faa).
         -sm, --suffix_model: Suffix of the ungapfilled models (default: .xml).
+        -sep, --separator: Separator used in the FASTA headers (default: "|").
         -e, --medium: Path to the medium file.
         -v, --version: Print version information and exit.
         -h, --help: Show help message and exit.
