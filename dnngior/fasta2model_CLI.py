@@ -312,7 +312,7 @@ def main():
         gf_data_location = os.path.join(args.output_folder, f'gf_data_{file_count}.tsv')
         while os.path.isfile(gf_data_location):
             file_count += 1
-            gf_data_location = gf_data_location.replace(str(file_count-1),str(file_count))
+            gf_data_location = gf_data_location.replace(f'gf_data_{file_count-1}.tsv',f'gf_data_{file_count}.tsv')
 
     args.gf_data_file = open(gf_data_location, 'w')
     args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\tmedium\n')
