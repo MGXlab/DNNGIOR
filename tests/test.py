@@ -20,7 +20,6 @@ from dnngior import gapfill_function
 from dnngior.gapfill_class  import Gapfill
 from dnngior.reaction_class import Reaction
 from dnngior.build_model import *
-from dnngior import NN_Trainer
 import gurobipy as gp
 from gurobipy import GRB
 
