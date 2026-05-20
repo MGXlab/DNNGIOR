@@ -118,7 +118,7 @@ class Gapfill:
                 del self.weights['St']
             if 'St' in self.draft_reaction_ids:
                 print('WARNING: St is a protected keyword for gurobi, renaming draft reaction to SULFD')
-                self.draft_reaction_ids['SULFD'] = self.draft_reaction_ids['St']
+                self.draft_reaction_ids.add('SULFD')
                 self.draft_reaction_ids.remove('St')
 
         # Add reactions from all_reactions to candidate_reactions, with cost = default_cost.
