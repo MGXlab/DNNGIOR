@@ -4,6 +4,8 @@ import os
 import tarfile
 from pathlib import Path
 
+print('Development version')
+
 path        = Path(os.path.dirname(__file__))
 BiochemRoot = os.path.join(path, 'files', 'biochemistry')
 
@@ -18,6 +20,19 @@ ff = Path(os.path.join(BiochemRoot, cpds_file))
 if not ff.is_file():
     file = tarfile.open(os.path.join(BiochemRoot, 'compounds.tsv.tar.gz'))
     file.extractall(BiochemRoot)
+
+b_rxns_file = "bigg_reactions.tsv"
+ff = Path(os.path.join(BiochemRoot, b_rxns_file))
+if not ff.is_file():
+    file = tarfile.open(os.path.join(BiochemRoot, 'bigg_reactions.tsv.tar.gz'))
+    file.extractall(BiochemRoot)
+
+b_cpds_file = "bigg_compounds.tsv"
+ff = Path(os.path.join(BiochemRoot, b_cpds_file))
+if not ff.is_file():
+    file = tarfile.open(os.path.join(BiochemRoot, 'bigg_compounds.tsv.tar.gz'))
+    file.extractall(BiochemRoot)
+
 
 import dnngior.files
 
