@@ -2,7 +2,7 @@ __pycache__
 *.egg-info/
 .ipynb_checkpoints/
 dist/
-compounds.tsv
-reactions.tsv
-bigg_reactions.tsv
-bigg_compounds.tsv
+dnngior/files/biochemistry/compounds.tsv
+dnngior/files/biochemistry/reactions.tsv
+dnngior/files/biochemistry/bigg_reactions.tsv
+dnngior/files/biochemistry/bigg_compounds.tsv
