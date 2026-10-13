@@ -4,8 +4,6 @@ import os
 import tarfile
 from pathlib import Path
 
-print('Development version')
-
 path        = Path(os.path.dirname(__file__))
 BiochemRoot = os.path.join(path, 'files', 'biochemistry')
 
