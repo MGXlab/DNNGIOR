@@ -18,7 +18,6 @@ from dnngior.reaction_class import Reaction
 from dnngior.NN_Predictor import NN
 from dnngior import build_model
 
-
 class Gapfill:
     def __init__(self,
                 draftModel,                     #Model to be gap-filled, required
@@ -110,7 +109,7 @@ class Gapfill:
             for p_reaction in self.predicted_reactions:
                 self.weights[p_reaction]  = np.round(1-self.predicted_reactions[p_reaction], 10)
         
-        #The name of sulfur transport is St, this means something in gurobi, so we rename it to SULFT
+        #The name of sulfur transport is St, this means something in gurobi, so we rename it to SULFD
         if dbType == 'BiGG':
             if 'St' in self.weights:
                 print('WARNING: St is a protected keyword for gurobi, renaming candidate to SULFD')
@@ -403,6 +402,10 @@ class Gapfill:
         the value of the obj
         list of added reactions
         '''
+        if 'St' in self.draft_reaction_ids:
+            print('WARNING: St is a protected keyword for gurobi, renaming draft reaction to SULFD')
+            self.draft_reaction_ids.add('SULFD')
+            self.draft_reaction_ids.remove('St')
 
         all_reacs = deepcopy(self.all_reactions.reactions)
         all_reacs_obj = Reaction()
