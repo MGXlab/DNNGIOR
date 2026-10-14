@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 __author__ = 'M.D. Boer'
-__version__ = '0.2'
+__version__ = '0.3'
 __date__ = '15 Sept, 2024'
 
 import argparse
@@ -83,6 +83,15 @@ def parse_arguments():
         type=str,
         help=('Suffix of the ungapfilled models (default .xml)')
     )
+
+    optional.add_argument(
+        '-sep',
+        '--separator',
+        default='|',
+        type=str,
+        help=('Separator used in the fasta headers (default "|")')
+    )
+
     
     optional.add_argument(
             '-e',
@@ -137,7 +146,7 @@ def build_base_model(args):
     from modelseedpy.core.rast_client import RastClient
     # Set the path to your genome
     logging.info('# Building MSGenome object')
-    patric_genome = MSGenome.from_fasta(args.path_to_fasta, split = '|')
+    patric_genome = MSGenome.from_fasta(args.path_to_fasta, split = args.separator)
     rast = RastClient()
     rast.annotate_genome(patric_genome)
     logging.info('# Building base model')
@@ -176,6 +185,7 @@ def build_gapfilled_model_from_fasta(args):
         base_model = build_base_model(args)
         write_sbml_model(cobra_model = base_model, filename = args.path_to_base_model)
     else:
+        print(f'# WARNING: Base model {args.model_name} already exists, skipping base model creation')
         logging.warning(f'# Base model {args.model_name} allready exists, skipping')
     gapfill_model_wrapper(args)
 
@@ -215,9 +225,8 @@ def gapfill_model_wrapper(args):
         n_gr = len(gf_model.added_reactions)
         args.gf_data_file.write(f'{args.model_name}\t{n_dr}\t{n_gr}\t{n_dr+n_gr}\t{medium_name}\n')
     else:
+        print(f'# WARNING: Base model {args.model_name} already exists, skipping gapfilling')
         logging.warning(f'# Gapfilled model {args.model_name} allready exists, skipping')
-        # gf_model = Gapfill(draftModel=args.path_to_gf_model, gapfill=False)
-        # gf_model.gapfilledModel = gf_model.draftModel
 
 
 def create_output_folder(args):
@@ -284,6 +293,7 @@ def main():
     - Optional:
         -sf, --suffix_faa: Suffix of the protein FASTA files (default: .faa).
         -sm, --suffix_model: Suffix of the ungapfilled models (default: .xml).
+        -sep, --separator: Separator used in the FASTA headers (default: "|").
         -e, --medium: Path to the medium file.
         -v, --version: Print version information and exit.
         -h, --help: Show help message and exit.
@@ -302,42 +312,49 @@ def main():
         gf_data_location = os.path.join(args.output_folder, f'gf_data_{file_count}.tsv')
         while os.path.isfile(gf_data_location):
             file_count += 1
-            gf_data_location = gf_data_location.replace(str(file_count-1),str(file_count))
+            gf_data_location = gf_data_location.replace(f'gf_data_{file_count-1}.tsv',f'gf_data_{file_count}.tsv')
 
-    args.gf_data_file = open(gf_data_location, 'w')
-    args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\tmedium\n')
+    with open(gf_data_location, 'w', encoding='UTF-8') as args.gf_data_file:
+        args.gf_data_file.write('model_id\tn_reactions_base\tn_gf_reactions\tn_total_reactions\tmedium\n')
+        if args.fasta_folder:
+            list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith(args.suffix_faa) or i.endswith(args.suffix_faa+'.gz')]
+            len_list_of_genomes = len(list_of_genomes)
+            if len_list_of_genomes == 0:
+                sys.exit(f'# ERROR: no fasta files found in {args.fasta_folder}')
+            logging.info(f'# Building and gapfilling {len_list_of_genomes} models')
+            for i, genome in enumerate(list_of_genomes):
+                try: 
+                    args.path_to_fasta = os.path.join(args.fasta_folder, genome)
+                    args.model_name = '.'.join(os.path.basename(args.path_to_fasta).split('.')[:-1])
+                    logging.info(f'# Building and gapfilling: {genome} ({i+1}/{len_list_of_genomes})')
+                    build_gapfilled_model_from_fasta(args)
+                except Exception as e:
+                    print(f'# ERROR: Failed on {genome}: {e}\n Continuing with next genome.')
+                    logging.error(f'Failed on {genome}: {e}')
+                    continue  # Continue with next
+            logging.info('#Done')
 
-
-    if args.fasta_folder:
-        list_of_genomes = [i for i in os.listdir(args.fasta_folder) if i.endswith(args.suffix_faa) or i.endswith(args.suffix_faa+'.gz')]
-        len_list_of_genomes = len(list_of_genomes)
-        if len_list_of_genomes == 0:
-            sys.exit(f'# ERROR: no fasta files found in {args.fasta_folder}')
-        logging.info(f'# Building and gapfilling {len_list_of_genomes} models')
-        for i, genome in enumerate(list_of_genomes):
-            args.path_to_fasta = os.path.join(args.fasta_folder, genome)
-            args.model_name = '.'.join(os.path.basename(args.path_to_fasta).split('.')[:-1])
-            logging.info(f'# Building and gapfilling: {genome} ({i+1}/{len_list_of_genomes})')
-            build_gapfilled_model_from_fasta(args)
-        logging.info('#Done')
-
-    elif args.model_folder:
-        list_of_models = [i for i in os.listdir(args.model_folder) if i.endswith(args.suffix_model)]
-        len_list_of_models = len(list_of_models)
-        if len_list_of_models == 0:
-            sys.exit(f'# ERROR: no model files found in {args.model_folder}')
-        logging.info(f'# Gapfilling {len_list_of_models} models')
-        for i, model in enumerate(list_of_models):
-            args.path_to_base_model = os.path.join(args.model_folder, model)
-            args.model_name = '.'.join(os.path.basename(args.path_to_base_model).split('.')[:-1])
-            if args.model_name.startswith('base_'):
-                args.model_name = args.model_name[5:]
-            logging.info(f'# Gapfilling: {model} ({i+1}/{len_list_of_models})')
-            gapfill_model_wrapper(args)
-        print('# Done')
-    else:
-        sys.exit('Either a fasta_folder or a model_folder needs to be provided')
-    args.gf_data_file.close()
+        elif args.model_folder:
+            list_of_models = [i for i in os.listdir(args.model_folder) if i.endswith(args.suffix_model)]
+            len_list_of_models = len(list_of_models)
+            if len_list_of_models == 0:
+                sys.exit(f'# ERROR: no model files found in {args.model_folder}')
+            logging.info(f'# Gapfilling {len_list_of_models} models')
+            for i, model in enumerate(list_of_models):
+                try:
+                    args.path_to_base_model = os.path.join(args.model_folder, model)
+                    args.model_name = '.'.join(os.path.basename(args.path_to_base_model).split('.')[:-1])
+                    if args.model_name.startswith('base_'):
+                        args.model_name = args.model_name[5:]
+                    logging.info(f'# Gapfilling: {model} ({i+1}/{len_list_of_models})')
+                    gapfill_model_wrapper(args)
+                except Exception as e:
+                    print(f'# ERROR: Failed on {model}: {e}\n Continuing with next model.')
+                    logging.error(f'Failed on {model}: {e}')
+                    continue
+            print('# Done')
+        else:
+            sys.exit('Either a fasta_folder or a model_folder needs to be provided')
 
 if __name__ == '__main__':
     main()

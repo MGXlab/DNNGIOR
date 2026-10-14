@@ -19,6 +19,19 @@ if not ff.is_file():
     file = tarfile.open(os.path.join(BiochemRoot, 'compounds.tsv.tar.gz'))
     file.extractall(BiochemRoot)
 
+b_rxns_file = "bigg_reactions.tsv"
+ff = Path(os.path.join(BiochemRoot, b_rxns_file))
+if not ff.is_file():
+    file = tarfile.open(os.path.join(BiochemRoot, 'bigg_reactions.tsv.tar.gz'))
+    file.extractall(BiochemRoot)
+
+b_cpds_file = "bigg_compounds.tsv"
+ff = Path(os.path.join(BiochemRoot, b_cpds_file))
+if not ff.is_file():
+    file = tarfile.open(os.path.join(BiochemRoot, 'bigg_compounds.tsv.tar.gz'))
+    file.extractall(BiochemRoot)
+
+
 import dnngior.files
 
 from dnngior.variables import *
@@ -36,7 +49,7 @@ from dnngior.build_model import refine_model
 from dnngior.NN_Predictor import NN
 
 try:
-    from dnngior.NN_Trainer import noise_data, generate_training_set, custom_weighted_loss, train
+    from dnngior.NN_Trainer import noise_data, generate_feature, custom_weighted_loss, train
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5'
 except:
     print("WARNING: To enable the NN_Trainer script, you need to install tensorflow <https://www.tensorflow.org/install>\n"

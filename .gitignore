@@ -5,3 +5,4 @@ dist/
 compounds.tsv
 reactions.tsv
 bigg_reactions.tsv
+bigg_compounds.tsv

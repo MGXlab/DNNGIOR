@@ -73,7 +73,7 @@ def noise_data(i, noise_0, noise_1, del_p, con_p):
     o = temp
     return o
 
-def generate_feature(data, nuplo, min_con, max_con, min_for, max_for, del_p, con_p):
+def generate_feature(data, nuplo=30, min_con=0, max_con=0, min_for=0.05, max_for=0.3, del_p=None, con_p=None):
     """
     Function to generate the dataset for training (feature).
         PARAMETERS:
@@ -92,7 +92,7 @@ def generate_feature(data, nuplo, min_con, max_con, min_for, max_for, del_p, con
         max_for, float
             maximum false ommision rate, default = 0.55
         min_con, float
-            minimum contanimation introduced, currently not in use, default = 0
+            minimum contamination introduced, currently not in use, default = 0
         max_con, float
             maximum contamination introduced, currently not in use, default = 0
         del_p, list
@@ -236,6 +236,8 @@ def train(data, modeltype,rxn_keys=None,labels = None,validation_split=0.0,nuplo
         ndata = np.asarray(data, dtype=np.float32).T
     elif rxn_keys is None:
         raise(Exception('Provide DataFrame or rxn_keys'))
+    else:
+        ndata = data
 
     #create feature from training data
     if(labels is None):
