@@ -1,13 +1,15 @@
 [tool.poetry]
 name = "dnngior"
-version = "0.0.3"
+version = "0.0.4"
 description = "build high-quality genome-scale metabolic model by using a deep neural network to guide gapfilling"
 authors = ["Haris Zafeiropoulos <haris.zafeiropoulos@kuleuven.be>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.12"
 cobra = "<=0.23.0"
+numpy = ">=1.23,<1.24"
+pandas = "*"
 gurobipy = "^10.0.1"
 
 
